@@ -3,12 +3,22 @@
 
     <item
         android:id="@+id/menu_chat"
-        android:icon="@drawable/chat_icon"
+        android:icon="@drawable/ic_chat"
         android:title="Chats" />
 
     <item
+        android:id="@+id/menu_friend"
+        android:icon="@drawable/ic_friend"
+        android:title="Friends" />
+
+    <item
+        android:id="@+id/menu_notification"
+        android:icon="@drawable/ic_notification"
+        android:title="Notifications" />
+
+    <item
         android:id="@+id/menu_profile"
-        android:icon="@drawable/person_icon"
+        android:icon="@drawable/ic_person"
         android:title="Profile" />
 
 </menu>

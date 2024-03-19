@@ -41,10 +41,9 @@ import kotlin.jvm.functions.Function1;
 public class ProfileFragment extends Fragment {
 
     private ImageView profilePic;
-    private EditText usernameInput, phoneInput;
+    private EditText usernameInput, emailInput;
     private Button updateProfileBtn;
-    private ProgressBar progressBar;
-    private TextView logoutBtn;
+    private Button logoutBtn;
 
     private User currentUser;
     private ActivityResultLauncher<Intent> imagePickLauncher;
@@ -64,7 +63,7 @@ public class ProfileFragment extends Fragment {
                             Intent data = result.getData();
                             if (data != null && data.getData() != null) {
                                 selectedImageUri = data.getData();
-                                AndroidUtil.setProfilePic(getContext(), selectedImageUri, profilePic);
+                                AndroidUtil.setProfilePicture(getContext(), selectedImageUri, profilePic);
                             }
                         }
                     }
@@ -75,13 +74,11 @@ public class ProfileFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
-        profilePic = view.findViewById(R.id.profile_image_view);
-        usernameInput = view.findViewById(R.id.profile_username);
-        phoneInput = view.findViewById(R.id.profile_phone);
-        updateProfileBtn = view.findViewById(R.id.profile_update_btn);
-        progressBar = view.findViewById(R.id.profile_progress_bar);
-        logoutBtn = view.findViewById(R.id.logout_btn);
-
+        profilePic = view.findViewById(R.id.image_view_profile_picture);
+        usernameInput = view.findViewById(R.id.edit_text_profile_username);
+        emailInput = view.findViewById(R.id.edit_text_profile_email);
+        updateProfileBtn = view.findViewById(R.id.btn_profile_update);
+        logoutBtn = view.findViewById(R.id.btn_profile_logout);
         getUserData();
 
         updateProfileBtn.setOnClickListener(new View.OnClickListener() {
@@ -94,6 +91,7 @@ public class ProfileFragment extends Fragment {
         logoutBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                updateProfileBtn.setEnabled(false);
                 FirebaseMessaging.getInstance().deleteToken().addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
@@ -127,16 +125,17 @@ public class ProfileFragment extends Fragment {
     }
 
     private void updateBtnClick() {
-        String newUsername = usernameInput.getText().toString();
-        if (newUsername.isEmpty() || newUsername.length() < 3) {
-            usernameInput.setError("Username length should be at least 3 chars");
+        String newUsername = usernameInput.getText().toString().trim();
+        if (newUsername.isEmpty()) {
+            usernameInput.setError("Can't leave blank");
             return;
         }
-        currentUser.setUsername(newUsername);
-        setInProgress(true);
 
+        currentUser.setUsername(newUsername);
+        updateProfileBtn.setEnabled(false);
+        logoutBtn.setEnabled(false);
         if (selectedImageUri != null) {
-            FirebaseUtil.getCurrentProfilePicStorageRef().putFile(selectedImageUri)
+            FirebaseUtil.getCurrentProfilePicture().putFile(selectedImageUri)
                     .addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
                         @Override
                         public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
@@ -149,15 +148,21 @@ public class ProfileFragment extends Fragment {
     }
 
     private void updateToFirestore() {
-        FirebaseUtil.currentUserDetails().set(currentUser)
+        FirebaseUtil.getCurrentUser().set(currentUser)
                 .addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
-                        setInProgress(false);
                         if (task.isSuccessful()) {
                             AndroidUtil.showToast(getContext(), "Updated successfully");
                         } else {
                             AndroidUtil.showToast(getContext(), "Updated failed");
+                        }
+
+                        try {
+                            updateProfileBtn.setEnabled(true);
+                            logoutBtn.setEnabled(true);
+                        } catch (Exception ignored) {
+
                         }
                     }
                 });
@@ -165,37 +170,24 @@ public class ProfileFragment extends Fragment {
 
 
     private void getUserData() {
-        setInProgress(true);
-
-        FirebaseUtil.getCurrentProfilePicStorageRef().getDownloadUrl()
+        FirebaseUtil.getCurrentProfilePicture().getDownloadUrl()
                 .addOnCompleteListener(new OnCompleteListener<Uri>() {
                     @Override
                     public void onComplete(@NonNull Task<Uri> task) {
                         if (task.isSuccessful()) {
                             Uri uri = task.getResult();
-                            AndroidUtil.setProfilePic(getContext(), uri, profilePic);
+                            AndroidUtil.setProfilePicture(getContext(), uri, profilePic);
                         }
                     }
                 });
 
-        FirebaseUtil.currentUserDetails().get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+        FirebaseUtil.getCurrentUser().get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                setInProgress(false);
                 currentUser = task.getResult().toObject(User.class);
                 usernameInput.setText(currentUser.getUsername());
-                phoneInput.setText(currentUser.getPhone());
+                emailInput.setText(currentUser.getEmail());
             }
         });
-    }
-
-    private void setInProgress(boolean inProgress) {
-        if (inProgress) {
-            progressBar.setVisibility(View.VISIBLE);
-            updateProfileBtn.setVisibility(View.GONE);
-        } else {
-            progressBar.setVisibility(View.GONE);
-            updateProfileBtn.setVisibility(View.VISIBLE);
-        }
     }
 }

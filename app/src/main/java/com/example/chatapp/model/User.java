@@ -1,30 +1,23 @@
 package com.example.chatapp.model;
 
-import com.google.firebase.Timestamp;
+import java.io.Serializable;
 
-public class User {
-    private String phone;
+public class User implements Serializable {
     private String username;
-    private Timestamp createdTimestamp;
+    private String usernameLowercase;
     private String userId;
+    private String email;
+    private String status;
     private String fcmToken;
 
     public User() {
     }
 
-    public User(String phone, String username, Timestamp createdTimestamp, String userId) {
-        this.phone = phone;
+    public User(String username, String userId, String email) {
         this.username = username;
-        this.createdTimestamp = createdTimestamp;
         this.userId = userId;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
+        this.email = email;
+        this.usernameLowercase = username.toLowerCase();
     }
 
     public String getUsername() {
@@ -33,14 +26,7 @@ public class User {
 
     public void setUsername(String username) {
         this.username = username;
-    }
-
-    public Timestamp getCreatedTimestamp() {
-        return createdTimestamp;
-    }
-
-    public void setCreatedTimestamp(Timestamp createdTimestamp) {
-        this.createdTimestamp = createdTimestamp;
+        this.usernameLowercase = username.toLowerCase();
     }
 
     public String getUserId() {
@@ -51,6 +37,14 @@ public class User {
         this.userId = userId;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
     public String getFcmToken() {
         return fcmToken;
     }
@@ -59,14 +53,19 @@ public class User {
         this.fcmToken = fcmToken;
     }
 
-    @Override
-    public String toString() {
-        return "UserModel{" +
-                "phone='" + phone + '\'' +
-                ", username='" + username + '\'' +
-                ", createdTimestamp=" + createdTimestamp +
-                ", userId='" + userId + '\'' +
-                ", fcmToken='" + fcmToken + '\'' +
-                '}';
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getUsernameLowercase() {
+        return usernameLowercase;
+    }
+
+    public void setUsernameLowercase(String usernameLowercase) {
+        this.usernameLowercase = usernameLowercase;
     }
 }

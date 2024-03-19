@@ -16,9 +16,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.chatapp.R;
-import com.example.chatapp.adapter.ChatRecyclerAdapter;
-import com.example.chatapp.model.ChatMessageModel;
-import com.example.chatapp.model.ChatroomModel;
+import com.example.chatapp.adapter.ChatRoomRecyclerAdapter;
+import com.example.chatapp.model.ChatMessage;
+import com.example.chatapp.model.ChatRoom;
 import com.example.chatapp.model.User;
 import com.example.chatapp.utils.AndroidUtil;
 import com.example.chatapp.utils.FirebaseUtil;
@@ -47,12 +47,12 @@ public class ChatActivity extends AppCompatActivity {
 
     private User otherUser;
     private String chatroomId;
-    private ChatroomModel chatroomModel;
-    private ChatRecyclerAdapter adapter;
+    private ChatRoom chatRoom;
+    private ChatRoomRecyclerAdapter adapter;
 
     private EditText messageInput;
     private ImageButton sendMessageBtn;
-    private ImageButton backBtn;
+    private ImageButton btnBackHome;
     private TextView otherUsername;
     private RecyclerView recyclerView;
     private ImageView imageView;
@@ -64,34 +64,35 @@ public class ChatActivity extends AppCompatActivity {
         setContentView(R.layout.activity_chat);
 
         //get UserModel
-        otherUser = AndroidUtil.getUserModelFromIntent(getIntent());
-        chatroomId = FirebaseUtil.getChatroomId(FirebaseUtil.currentUserId(), otherUser.getUserId());
+        otherUser = (User)getIntent().getSerializableExtra("otherUser");
+        chatroomId = FirebaseUtil.getChatRoomId(FirebaseUtil.getCurrentUserId(), otherUser.getUserId());
 
         messageInput = findViewById(R.id.chat_message_input);
         sendMessageBtn = findViewById(R.id.message_send_btn);
-        backBtn = findViewById(R.id.back_btn);
+        btnBackHome = findViewById(R.id.btn_back_home);
         otherUsername = findViewById(R.id.other_username);
         recyclerView = findViewById(R.id.chat_recycler_view);
-        imageView = findViewById(R.id.profile_pic_image_view);
+        imageView = findViewById(R.id.profile_pic_layout);
 
-        FirebaseUtil.getOtherProfilePicStorageRef(otherUser.getUserId()).getDownloadUrl()
+
+        otherUsername.setText(otherUser.getUsername());
+        FirebaseUtil.getProfilePictureByUserId(otherUser.getUserId()).getDownloadUrl()
                 .addOnCompleteListener(new OnCompleteListener<Uri>() {
                     @Override
                     public void onComplete(@NonNull Task<Uri> task) {
                         if (task.isSuccessful()) {
                             Uri uri = task.getResult();
-                            AndroidUtil.setProfilePic(ChatActivity.this, uri, imageView);
+                            AndroidUtil.setProfilePicture(ChatActivity.this, uri, imageView);
                         }
                     }
                 });
 
-        backBtn.setOnClickListener(new View.OnClickListener() {
+        btnBackHome.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onBackPressed();
+                startActivity(AndroidUtil.getBackHomeIntent(ChatActivity.this));
             }
         });
-        otherUsername.setText(otherUser.getUsername());
 
         sendMessageBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -111,13 +112,13 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void setupChatRecyclerView() {
-        Query query = FirebaseUtil.getChatroomMessageReference(chatroomId)
+        Query query = FirebaseUtil.getAllChatMessageOfChatRoomById(chatroomId)
                 .orderBy("timestamp", Query.Direction.ASCENDING);
 
-        FirestoreRecyclerOptions<ChatMessageModel> options = new FirestoreRecyclerOptions.Builder<ChatMessageModel>()
-                .setQuery(query, ChatMessageModel.class).build();
+        FirestoreRecyclerOptions<ChatMessage> options = new FirestoreRecyclerOptions.Builder<ChatMessage>()
+                .setQuery(query, ChatMessage.class).build();
 
-        adapter = new ChatRecyclerAdapter(options, getApplicationContext());
+        adapter = new ChatRoomRecyclerAdapter(options, getApplicationContext(), otherUser.getUserId());
         LinearLayoutManager manager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(manager);
         recyclerView.setAdapter(adapter);
@@ -133,13 +134,13 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void sendMessageToUser(String message) {
-        chatroomModel.setLastMessageTimestamp(Timestamp.now());
-        chatroomModel.setLastMessageSenderId(FirebaseUtil.currentUserId());
-        chatroomModel.setLastMessage(message);
-        FirebaseUtil.getChatroomReference(chatroomId).set(chatroomModel);
+        chatRoom.setLastMessageTimestamp(Timestamp.now());
+        chatRoom.setLastMessageSenderId(FirebaseUtil.getCurrentUserId());
+        chatRoom.setLastMessage(message);
+        FirebaseUtil.getChatRoomById(chatroomId).set(chatRoom);
 
-        ChatMessageModel chatMessageModel = new ChatMessageModel(message, FirebaseUtil.currentUserId(), Timestamp.now());
-        FirebaseUtil.getChatroomMessageReference(chatroomId).add(chatMessageModel)
+        ChatMessage chatMessage = new ChatMessage(message, FirebaseUtil.getCurrentUserId(), Timestamp.now());
+        FirebaseUtil.getAllChatMessageOfChatRoomById(chatroomId).add(chatMessage)
                 .addOnCompleteListener(new OnCompleteListener<DocumentReference>() {
                     @Override
                     public void onComplete(@NonNull Task<DocumentReference> task) {
@@ -152,20 +153,20 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void getOrCreateChatroomModel() {
-        FirebaseUtil.getChatroomReference(chatroomId).get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+        FirebaseUtil.getChatRoomById(chatroomId).get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DocumentSnapshot> task) {
                 if (task.isSuccessful()) {
-                    chatroomModel = task.getResult().toObject(ChatroomModel.class);
-                    if (chatroomModel == null) {
+                    chatRoom = task.getResult().toObject(ChatRoom.class);
+                    if (chatRoom == null) {
                         //first time chat
-                        chatroomModel = new ChatroomModel(
+                        chatRoom = new ChatRoom(
                                 chatroomId,
-                                Arrays.asList(FirebaseUtil.currentUserId(), otherUser.getUserId()),
+                                Arrays.asList(FirebaseUtil.getCurrentUserId(), otherUser.getUserId()),
                                 Timestamp.now(),
                                 ""
                         );
-                        FirebaseUtil.getChatroomReference(chatroomId).set(chatroomModel);
+                        FirebaseUtil.getChatRoomById(chatroomId).set(chatRoom);
                     }
                 }
             }
@@ -174,7 +175,7 @@ public class ChatActivity extends AppCompatActivity {
 
     private void sendNotification(String message) {
 
-        FirebaseUtil.currentUserDetails().get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+        FirebaseUtil.getCurrentUser().get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DocumentSnapshot> task) {
                 if (task.isSuccessful()) {

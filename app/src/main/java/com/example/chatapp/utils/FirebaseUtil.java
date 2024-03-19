@@ -16,34 +16,45 @@ import java.util.List;
 import java.util.Locale;
 
 public class FirebaseUtil {
-    public static String currentUserId() {
+    public static String getCurrentUserId() {
         return FirebaseAuth.getInstance().getUid();
     }
 
     public static boolean isLoggedIn() {
-        if (currentUserId() != null) {
-            return true;
-        }
-        return false;
+        return getCurrentUserId() != null;
     }
 
-    public static DocumentReference currentUserDetails() {
-        return FirebaseFirestore.getInstance().collection("users").document(currentUserId());
+    public static DocumentReference getCurrentUser() {
+        return getUserById(getCurrentUserId());
     }
 
-    public static CollectionReference allUserCollectionReference() {
+    public static DocumentReference getUserById(String userId) {
+        return FirebaseFirestore.getInstance().collection("users").document(userId);
+    }
+
+    public static void logout() {
+        FirebaseAuth.getInstance().signOut();
+    }
+
+    //////
+
+    public static CollectionReference getAllUser() {
         return FirebaseFirestore.getInstance().collection("users");
     }
 
-    public static DocumentReference getChatroomReference(String chatroomId) {
+    public static DocumentReference getChatRoomById(String chatroomId) {
         return FirebaseFirestore.getInstance().collection("chatrooms").document(chatroomId);
     }
 
-    public static CollectionReference getChatroomMessageReference(String chatroomId) {
-        return getChatroomReference(chatroomId).collection("chats");
+    public static CollectionReference getAllChatMessageOfChatRoomById(String chatroomId) {
+        return getChatRoomById(chatroomId).collection("chats");
     }
 
-    public static String getChatroomId(String userId1, String userId2) {
+    public static CollectionReference getAllChatRoom() {
+        return FirebaseFirestore.getInstance().collection("chatrooms");
+    }
+
+    public static String getChatRoomId(String userId1, String userId2) {
         if (userId1.hashCode() < userId2.hashCode()) {
             return userId1 + "_" + userId2;
         } else {
@@ -51,35 +62,26 @@ public class FirebaseUtil {
         }
     }
 
-    public static CollectionReference allChatroomCollectionReference() {
-        return FirebaseFirestore.getInstance().collection("chatrooms");
+    public static DocumentReference getOtherUserFromChatroom(List<String> userIds) {
+        if (userIds.get(0).equals(FirebaseUtil.getCurrentUserId())) {
+            return getAllUser().document(userIds.get(1));
+        } else {
+            return getAllUser().document(userIds.get(0));
+        }
     }
 
-    public static DocumentReference getOtherUserFromChatroom(List<String> userIds) {
-        if (userIds.get(0).equals(FirebaseUtil.currentUserId())) {
-            return allUserCollectionReference().document(userIds.get(1));
-        } else {
-            return allUserCollectionReference().document(userIds.get(0));
-        }
+    public static StorageReference getCurrentProfilePicture() {
+        return getProfilePictureByUserId(FirebaseUtil.getCurrentUserId());
+    }
+
+    public static StorageReference getProfilePictureByUserId(String userId) {
+        return FirebaseStorage.getInstance().getReference()
+                .child("profile_pic").child(userId);
     }
 
     public static String timestampToString(Timestamp timestamp) {
         Date date = timestamp.toDate();
         SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
         return dateFormat.format(date);
-    }
-
-    public static void logout() {
-        FirebaseAuth.getInstance().signOut();
-    }
-
-    public static StorageReference getCurrentProfilePicStorageRef() {
-        return FirebaseStorage.getInstance().getReference().child("profile_pic")
-                .child(FirebaseUtil.currentUserId());
-    }
-
-    public static StorageReference getOtherProfilePicStorageRef(String otherUserId) {
-        return FirebaseStorage.getInstance().getReference().child("profile_pic")
-                .child(otherUserId);
     }
 }

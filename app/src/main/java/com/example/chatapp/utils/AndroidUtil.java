@@ -5,9 +5,14 @@ import android.content.Intent;
 import android.net.Uri;
 import android.widget.ImageView;
 import android.widget.Toast;
+import android.content.DialogInterface;
+
+import androidx.appcompat.app.AlertDialog;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
+import com.example.chatapp.activity.ChatActivity;
+import com.example.chatapp.activity.MainActivity;
 import com.example.chatapp.model.User;
 
 
@@ -17,23 +22,38 @@ public class AndroidUtil {
         Toast.makeText(context, message, Toast.LENGTH_LONG).show();
     }
 
-    public static void passUserModelAsIntent(Intent intent, User model){
-        intent.putExtra("username",model.getUsername());
-        intent.putExtra("phone",model.getPhone());
-        intent.putExtra("userId",model.getUserId());
-        intent.putExtra("fcmToken",model.getFcmToken());
+    public static void showOptionPanel(Context context, String title, String message, String positiveButtonText,
+                                       String negativeButtonText, DialogInterface.OnClickListener positiveClickListener,
+                                       DialogInterface.OnClickListener negativeClickListener) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle(title);
+        builder.setMessage(message);
+        builder.setPositiveButton(positiveButtonText, positiveClickListener);
+        builder.setNegativeButton(negativeButtonText, negativeClickListener);
+        builder.setCancelable(false); // Prevent dialog from being dismissed by tapping outside
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
     }
 
-    public static User getUserModelFromIntent(Intent intent){
-        User user = new User();
-        user.setUsername(intent.getStringExtra("username"));
-        user.setPhone(intent.getStringExtra("phone"));
-        user.setUserId(intent.getStringExtra("userId"));
-        user.setFcmToken(intent.getStringExtra("fcmToken"));
-        return user;
+    public static Intent getBackHomeIntent(Context context) {
+        Intent intent = new Intent(context, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        return intent;
     }
-//
-    public static void setProfilePic(Context context, Uri imageUri, ImageView imageView){
+
+    /////////////////////////////
+
+    public static void passUserModelAsIntent(Intent intent, User model) {
+        intent.putExtra("username", model.getUsername());
+        intent.putExtra("userId", model.getUserId());
+        intent.putExtra("fcmToken", model.getFcmToken());
+    }
+
+
+
+    //
+    public static void setProfilePicture(Context context, Uri imageUri, ImageView imageView) {
         Glide.with(context).load(imageUri).apply(RequestOptions.circleCropTransform()).into(imageView);
     }
 }

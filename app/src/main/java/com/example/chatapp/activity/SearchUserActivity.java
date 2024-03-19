@@ -6,6 +6,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
 import android.view.View;
+import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
 import android.widget.ImageButton;
 
@@ -18,10 +19,9 @@ import com.google.firebase.firestore.Query;
 
 public class SearchUserActivity extends AppCompatActivity {
 
-    private EditText searchInput;
-    private ImageButton searchButton, backButton;
+    private AutoCompleteTextView searchInput;
+    private ImageButton searchButton;
     private RecyclerView recyclerView;
-
     private SearchUserRecyclerAdapter adapter;
 
     @Override
@@ -29,19 +29,10 @@ public class SearchUserActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search_user);
 
-        searchInput = findViewById(R.id.search_username_input);
-        searchButton = findViewById(R.id.search_user_btn);
-        backButton = findViewById(R.id.back_btn);
+        searchInput = findViewById(R.id.edit_text_search_username);
+        searchButton = findViewById(R.id.btn_search_user);
         recyclerView = findViewById(R.id.search_user_recycler_view);
-
         searchInput.requestFocus();
-
-        backButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onBackPressed();
-            }
-        });
 
         searchButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -53,15 +44,17 @@ public class SearchUserActivity extends AppCompatActivity {
     }
 
     private void setupSearchRecyclerView(String searchTerm) {
-        Query query = FirebaseUtil.allUserCollectionReference()
-                .whereGreaterThanOrEqualTo("username", searchTerm)
-                .whereLessThanOrEqualTo("username", searchTerm + '\uf8ff');
+        String searchLowerCase = searchTerm.toLowerCase();
+        Query query = FirebaseUtil.getAllUser()
+                .whereGreaterThanOrEqualTo("usernameLowercase", searchLowerCase)
+                .whereLessThan("usernameLowercase", searchLowerCase + "\uf8ff")
+                .orderBy("usernameLowercase");
 
         FirestoreRecyclerOptions<User> options = new FirestoreRecyclerOptions.Builder<User>()
                 .setQuery(query, User.class).build();
 
         adapter = new SearchUserRecyclerAdapter(options, getApplicationContext());
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setLayoutManager(new LinearLayoutManager(SearchUserActivity.this));
         recyclerView.setAdapter(adapter);
         adapter.startListening();
     }
@@ -79,14 +72,6 @@ public class SearchUserActivity extends AppCompatActivity {
         super.onStop();
         if (adapter != null) {
             adapter.stopListening();
-        }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (adapter != null) {
-            adapter.startListening();
         }
     }
 }

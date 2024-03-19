@@ -13,9 +13,9 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-//import com.example.chatapp.activity.ChatActivity;
-import com.example.chatapp.R;
 import com.example.chatapp.activity.ChatActivity;
+import com.example.chatapp.R;
+import com.example.chatapp.activity.UserProfileActivity;
 import com.example.chatapp.model.User;
 import com.example.chatapp.utils.AndroidUtil;
 import com.example.chatapp.utils.FirebaseUtil;
@@ -37,19 +37,19 @@ public class SearchUserRecyclerAdapter extends
     @Override
     protected void onBindViewHolder(@NonNull SearchUserViewHolder holder, int position, @NonNull User model) {
         holder.usernameText.setText(model.getUsername());
-        holder.phoneText.setText(model.getPhone());
-        if (model.getUserId().equals(FirebaseUtil.currentUserId())) {
-            holder.usernameText.setText(model.getUsername() + " (Me)");
+        holder.emailText.setText(model.getEmail());
+        if (model.getUserId().equals(FirebaseUtil.getCurrentUserId())) {
+            holder.usernameText.setText(String.format("%s (Me)", model.getUsername()));
             holder.itemView.setEnabled(false);
         }
 
-        FirebaseUtil.getOtherProfilePicStorageRef(model.getUserId()).getDownloadUrl()
+        FirebaseUtil.getProfilePictureByUserId(model.getUserId()).getDownloadUrl()
                 .addOnCompleteListener(new OnCompleteListener<Uri>() {
                     @Override
                     public void onComplete(@NonNull Task<Uri> task) {
                         if (task.isSuccessful()) {
                             Uri uri = task.getResult();
-                            AndroidUtil.setProfilePic(context, uri, holder.profilePic);
+                            AndroidUtil.setProfilePicture(context, uri, holder.profilePicture);
                         }
                     }
                 });
@@ -57,9 +57,9 @@ public class SearchUserRecyclerAdapter extends
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //navigate to chat activity
-                Intent intent = new Intent(context, ChatActivity.class);
-                AndroidUtil.passUserModelAsIntent(intent, model);
+                //navigate to user profile activity
+                Intent intent = new Intent(context, UserProfileActivity.class);
+                intent.putExtra("userId", model.getUserId());
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(intent);
             }
@@ -75,14 +75,14 @@ public class SearchUserRecyclerAdapter extends
 
     class SearchUserViewHolder extends RecyclerView.ViewHolder {
         TextView usernameText;
-        TextView phoneText;
-        ImageView profilePic;
+        TextView emailText;
+        ImageView profilePicture;
 
         public SearchUserViewHolder(@NonNull View itemView) {
             super(itemView);
-            usernameText = itemView.findViewById(R.id.user_name_text);
-            phoneText = itemView.findViewById(R.id.phone_text);
-            profilePic = itemView.findViewById(R.id.profile_pic_image_view);
+            usernameText = itemView.findViewById(R.id.text_username);
+            emailText = itemView.findViewById(R.id.text_email);
+            profilePicture = itemView.findViewById(R.id.profile_picture_image_view);
         }
     }
 }

@@ -1,0 +1,141 @@
+package com.example.chatapp.activity;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.os.Bundle;
+import android.util.Patterns;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+
+import com.example.chatapp.R;
+import com.example.chatapp.model.User;
+import com.example.chatapp.utils.AndroidUtil;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+public class EmailRegisterActivity extends AppCompatActivity {
+    private EditText usernameEditText, emailEditText, passwordEditText, reenteredPasswordEditText;
+    private Button registerButton;
+    FirebaseAuth firebaseAuth;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_email_register);
+
+        usernameEditText = findViewById(R.id.edit_text_register_username);
+        emailEditText = findViewById(R.id.edit_text_register_email);
+        passwordEditText = findViewById(R.id.edit_text_register_password);
+        reenteredPasswordEditText = findViewById(R.id.edit_text_register_reentered_password);
+        registerButton = findViewById(R.id.btn_email_register);
+        firebaseAuth = FirebaseAuth.getInstance();
+
+        registerButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String username = usernameEditText.getText().toString().trim();
+                String email = emailEditText.getText().toString().trim();
+                String password = passwordEditText.getText().toString().trim();
+                String reenteredPassword = reenteredPasswordEditText.getText().toString().trim();
+                register(username, email, password, reenteredPassword);
+            }
+        });
+    }
+
+    private void register(String username, String email, String password, String reenteredPassword) {
+        if (!checkValidInformation(username, email, password, reenteredPassword)) {
+            return;
+        }
+
+        // register account with firebase
+        registerButton.setEnabled(false);
+        firebaseAuth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            String uid = task.getResult().getUser().getUid();
+                            User user = new User(username, uid, email);
+                            addUserToFirebase(uid, user, password);
+
+                        } else {
+                            Exception exception = task.getException();
+                            String errorMessage = exception.getMessage();
+                            AndroidUtil.showToast(EmailRegisterActivity.this, "Registration failed: " + errorMessage);
+                        }
+
+                        registerButton.setEnabled(true);
+                    }
+                });
+    }
+
+    private void addUserToFirebase(String uid, User user, String password) {
+        FirebaseFirestore.getInstance().collection("users").document(uid).set(user)
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if (task.isSuccessful()) {
+                            AndroidUtil.showToast(EmailRegisterActivity.this, "Registration Completed");
+                            AndroidUtil.showOptionPanel(EmailRegisterActivity.this, "Confirmation", "Go back to Login Screen with your new account?",
+                                    "Yes", "No",
+                                    new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            // yes
+                                            Intent intent = new Intent(EmailRegisterActivity.this, EmailLoginActivity.class);
+                                            intent.putExtra("email", user.getEmail());
+                                            intent.putExtra("password", password);
+                                            startActivity(intent);
+                                        }
+                                    },
+                                    new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            // no
+                                        }
+                                    });
+                        } else {
+                            Exception exception = task.getException();
+                            String errorMessage = exception.getMessage();
+                            AndroidUtil.showToast(EmailRegisterActivity.this, "Registration failed: " + errorMessage);
+                        }
+                    }
+                });
+    }
+
+    private boolean checkValidInformation(String username, String email, String password, String reenteredPassword) {
+        if (username.isEmpty()) {
+            usernameEditText.setError("Empty Field");
+            return false;
+        }
+
+        if (email.isEmpty()) {
+            emailEditText.setError("Empty Field");
+            return false;
+        }
+
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            emailEditText.setError("Invalid Email");
+            return false;
+        }
+
+        if (password.isEmpty()) {
+            passwordEditText.setError("Empty Field");
+            return false;
+        }
+
+        if (!reenteredPassword.equals(password)) {
+            reenteredPasswordEditText.setError("Password isn't the same");
+            return false;
+        }
+
+        return true;
+    }
+}
