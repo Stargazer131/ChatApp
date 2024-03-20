@@ -36,6 +36,10 @@ public class RecentChatRecyclerAdapter
 
     @Override
     protected void onBindViewHolder(@NonNull RecentChatModelViewHolder holder, int position, @NonNull ChatRoom model) {
+        if (model.getLastMessageSenderId().equals("")) {
+//            holder.parent.setLayoutParams(new RecyclerView.LayoutParams(0, 0));
+        }
+
         FirebaseUtil.getOtherUserFromChatroom(model.getUserIds())
                 .get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
                     @Override
@@ -65,7 +69,7 @@ public class RecentChatRecyclerAdapter
                             }
 
                             holder.usernameText.setText(otherUser.getUsername());
-                            holder.lastMessageTime.setText(FirebaseUtil.timestampToString(model.getLastMessageTimestamp()));
+                            holder.lastMessageTime.setText(FirebaseUtil.timestampToHourMinuteString(model.getLastMessageTimestamp()));
                             holder.itemView.setOnClickListener(new View.OnClickListener() {
                                 @Override
                                 public void onClick(View v) {
@@ -95,6 +99,7 @@ public class RecentChatRecyclerAdapter
         TextView lastMessageText;
         TextView lastMessageTime;
         ImageView profilePic;
+        LinearLayout parent;
 
         public RecentChatModelViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -102,6 +107,7 @@ public class RecentChatRecyclerAdapter
             lastMessageText = itemView.findViewById(R.id.last_message_text);
             lastMessageTime = itemView.findViewById(R.id.last_message_time_text);
             profilePic = itemView.findViewById(R.id.profile_picture_image_view);
+            parent = itemView.findViewById(R.id.recent_chat_row_layout);
         }
     }
 }

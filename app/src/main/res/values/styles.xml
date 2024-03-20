@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="PopupMenuStyle" parent="@android:style/Widget.PopupMenu">
+        <item name="android:padding">8dp</item> <!-- Adjust the padding as needed -->
+        <item name="android:textSize">14sp</item> <!-- Adjust the text size as needed -->
+    </style>
+</resources>

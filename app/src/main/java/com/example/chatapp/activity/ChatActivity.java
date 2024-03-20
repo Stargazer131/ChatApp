@@ -1,13 +1,23 @@
 package com.example.chatapp.activity;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.PopupMenu;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.Gravity;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -17,24 +27,30 @@ import android.widget.TextView;
 
 import com.example.chatapp.R;
 import com.example.chatapp.adapter.ChatRoomRecyclerAdapter;
+import com.example.chatapp.fragment.ProfileFragment;
 import com.example.chatapp.model.ChatMessage;
 import com.example.chatapp.model.ChatRoom;
 import com.example.chatapp.model.User;
 import com.example.chatapp.utils.AndroidUtil;
 import com.example.chatapp.utils.FirebaseUtil;
+import com.example.chatapp.utils.UniformContract;
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
+import com.github.dhaval2404.imagepicker.ImagePicker;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.storage.UploadTask;
 
 import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.Arrays;
 
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.MediaType;
@@ -51,12 +67,14 @@ public class ChatActivity extends AppCompatActivity {
     private ChatRoomRecyclerAdapter adapter;
 
     private EditText messageInput;
-    private ImageButton sendMessageBtn;
+    private ImageButton sendMessageBtn, btnAddOtherFile;
     private ImageButton btnBackHome;
     private TextView otherUsername;
     private RecyclerView recyclerView;
     private ImageView imageView;
-
+    private PopupMenu popupMenu;
+    // for sending image
+    private ActivityResultLauncher<Intent> imagePickLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,7 +82,7 @@ public class ChatActivity extends AppCompatActivity {
         setContentView(R.layout.activity_chat);
 
         //get UserModel
-        otherUser = (User)getIntent().getSerializableExtra("otherUser");
+        otherUser = (User) getIntent().getSerializableExtra("otherUser");
         chatroomId = FirebaseUtil.getChatRoomId(FirebaseUtil.getCurrentUserId(), otherUser.getUserId());
 
         messageInput = findViewById(R.id.chat_message_input);
@@ -73,20 +91,24 @@ public class ChatActivity extends AppCompatActivity {
         otherUsername = findViewById(R.id.other_username);
         recyclerView = findViewById(R.id.chat_recycler_view);
         imageView = findViewById(R.id.profile_pic_layout);
+        btnAddOtherFile = findViewById(R.id.btn_send_other_file);
 
-
-        otherUsername.setText(otherUser.getUsername());
-        FirebaseUtil.getProfilePictureByUserId(otherUser.getUserId()).getDownloadUrl()
-                .addOnCompleteListener(new OnCompleteListener<Uri>() {
+        imagePickLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+                new ActivityResultCallback<ActivityResult>() {
                     @Override
-                    public void onComplete(@NonNull Task<Uri> task) {
-                        if (task.isSuccessful()) {
-                            Uri uri = task.getResult();
-                            AndroidUtil.setProfilePicture(ChatActivity.this, uri, imageView);
+                    public void onActivityResult(ActivityResult result) {
+                        if (result.getResultCode() == Activity.RESULT_OK) {
+                            Intent data = result.getData();
+                            if (data != null && data.getData() != null) {
+                                Uri selectedImageUri = data.getData();
+                                sendImageToUser(selectedImageUri);
+                            }
                         }
                     }
                 });
 
+
+        setOtherUserData();
         btnBackHome.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -107,8 +129,60 @@ public class ChatActivity extends AppCompatActivity {
             }
         });
 
+        btnAddOtherFile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setUpPopupMenu();
+            }
+        });
+
         getOrCreateChatroomModel();
         setupChatRecyclerView();
+    }
+
+    private void setUpPopupMenu() {
+        popupMenu = new PopupMenu(ChatActivity.this, btnAddOtherFile);
+        popupMenu.getMenuInflater().inflate(R.menu.pop_up_other_file_menu, popupMenu.getMenu());
+        popupMenu.setForceShowIcon(true);
+
+        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                if (item.getItemId() == R.id.menu_item_image) {
+                    ImagePicker.with(ChatActivity.this)
+                            .compress(512)
+                            .maxResultSize(512, 512)
+                            .createIntent(new Function1<Intent, Unit>() {
+                                @Override
+                                public Unit invoke(Intent intent) {
+                                    imagePickLauncher.launch(intent);
+                                    return null;
+                                }
+                            });
+                }
+                if (item.getItemId() == R.id.menu_item_video) {
+
+                }
+
+                return true;
+            }
+        });
+
+        popupMenu.show();
+    }
+
+    private void setOtherUserData() {
+        otherUsername.setText(otherUser.getUsername());
+        FirebaseUtil.getProfilePictureByUserId(otherUser.getUserId()).getDownloadUrl()
+                .addOnCompleteListener(new OnCompleteListener<Uri>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Uri> task) {
+                        if (task.isSuccessful()) {
+                            Uri uri = task.getResult();
+                            AndroidUtil.setProfilePicture(ChatActivity.this, uri, imageView);
+                        }
+                    }
+                });
     }
 
     private void setupChatRecyclerView() {
@@ -119,9 +193,11 @@ public class ChatActivity extends AppCompatActivity {
                 .setQuery(query, ChatMessage.class).build();
 
         adapter = new ChatRoomRecyclerAdapter(options, getApplicationContext(), otherUser.getUserId());
-        LinearLayoutManager manager = new LinearLayoutManager(this);
+        LinearLayoutManager manager = new LinearLayoutManager(  ChatActivity.this);
+
         recyclerView.setLayoutManager(manager);
         recyclerView.setAdapter(adapter);
+        recyclerView.getRecycledViewPool().setMaxRecycledViews(0, 0);
         adapter.startListening();
         adapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
             @Override
@@ -139,7 +215,10 @@ public class ChatActivity extends AppCompatActivity {
         chatRoom.setLastMessage(message);
         FirebaseUtil.getChatRoomById(chatroomId).set(chatRoom);
 
-        ChatMessage chatMessage = new ChatMessage(message, FirebaseUtil.getCurrentUserId(), Timestamp.now());
+        ChatMessage chatMessage = new ChatMessage(
+                message, FirebaseUtil.getCurrentUserId(), Timestamp.now(),
+                chatroomId, UniformContract.MESSAGE_TYPE_STRING, ""
+        );
         FirebaseUtil.getAllChatMessageOfChatRoomById(chatroomId).add(chatMessage)
                 .addOnCompleteListener(new OnCompleteListener<DocumentReference>() {
                     @Override
@@ -151,6 +230,57 @@ public class ChatActivity extends AppCompatActivity {
                     }
                 });
     }
+
+    private void sendImageToUser(Uri uri) {
+        // update chat room
+        String message = "Image";
+        Timestamp timestampNow = Timestamp.now();
+
+        chatRoom.setLastMessageTimestamp(timestampNow);
+        chatRoom.setLastMessageSenderId(FirebaseUtil.getCurrentUserId());
+        chatRoom.setLastMessage(message);
+        FirebaseUtil.getChatRoomById(chatroomId).set(chatRoom);
+
+        // set message type to IMAGE
+        // generate unique media file key
+        String mediaFieldId = String.format("%s_%s",
+                FirebaseUtil.getCurrentUserId(), FirebaseUtil.timestampToFullString(timestampNow)
+        );
+        ChatMessage chatMessage = new ChatMessage(
+                message, FirebaseUtil.getCurrentUserId(), timestampNow,
+                chatroomId, UniformContract.MESSAGE_TYPE_IMAGE, mediaFieldId
+        );
+
+        // update image file to firebase
+        updateMediaFileToFirebase(uri, chatroomId, mediaFieldId, chatMessage);
+    }
+
+    private void updateMediaFileToFirebase(Uri uri, String chatroomId, String mediaFileId, ChatMessage chatMessage) {
+        FirebaseUtil.getMediaFileOfChatRoomById(chatroomId, mediaFileId).putFile(uri)
+                .addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
+                        if(task.isSuccessful()) {
+                            FirebaseUtil.getAllChatMessageOfChatRoomById(chatroomId).add(chatMessage)
+                                    .addOnCompleteListener(new OnCompleteListener<DocumentReference>() {
+                                        @Override
+                                        public void onComplete(@NonNull Task<DocumentReference> task) {
+                                            if (task.isSuccessful()) {
+                                                // send notification
+                                                sendNotification(chatMessage.getMessage());
+
+                                            } else {
+                                                AndroidUtil.showToast(ChatActivity.this, "Can't add message");
+                                            }
+                                        }
+                                    });
+                        } else {
+                            AndroidUtil.showToast(ChatActivity.this, "Can't add image");
+                        }
+                    }
+                });
+    }
+
 
     private void getOrCreateChatroomModel() {
         FirebaseUtil.getChatRoomById(chatroomId).get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {

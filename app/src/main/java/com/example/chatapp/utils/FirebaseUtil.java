@@ -54,6 +54,10 @@ public class FirebaseUtil {
         return FirebaseFirestore.getInstance().collection("chatrooms");
     }
 
+    public static DocumentReference getChatMessageById(String chatroomId, String messageId) {
+        return getAllChatMessageOfChatRoomById(chatroomId).document(messageId);
+    }
+
     public static String getChatRoomId(String userId1, String userId2) {
         if (userId1.hashCode() < userId2.hashCode()) {
             return userId1 + "_" + userId2;
@@ -79,9 +83,22 @@ public class FirebaseUtil {
                 .child("profile_pic").child(userId);
     }
 
-    public static String timestampToString(Timestamp timestamp) {
+    public static StorageReference getMediaFileOfChatRoomById(String chatRoomId, String mediaFileId) {
+        return FirebaseStorage.getInstance().getReference()
+                .child("media_file")
+                .child(chatRoomId)
+                .child(mediaFileId);
+    }
+
+    public static String timestampToHourMinuteString(Timestamp timestamp) {
         Date date = timestamp.toDate();
         SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+        return dateFormat.format(date);
+    }
+
+    public static String timestampToFullString(Timestamp timestamp) {
+        Date date = timestamp.toDate();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy-HH-mm-ss-SSS", Locale.getDefault());
         return dateFormat.format(date);
     }
 }

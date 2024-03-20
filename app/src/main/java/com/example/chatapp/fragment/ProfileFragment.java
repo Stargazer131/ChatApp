@@ -19,8 +19,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
-import android.widget.TextView;
 
 import com.example.chatapp.activity.SplashActivity;
 import com.example.chatapp.utils.AndroidUtil;
@@ -135,19 +133,23 @@ public class ProfileFragment extends Fragment {
         updateProfileBtn.setEnabled(false);
         logoutBtn.setEnabled(false);
         if (selectedImageUri != null) {
-            FirebaseUtil.getCurrentProfilePicture().putFile(selectedImageUri)
-                    .addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
-                        @Override
-                        public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
-                            updateToFirestore();
-                        }
-                    });
+            updateUserDataAndProfileImageToFirebase();
         } else {
-            updateToFirestore();
+            updateUserDataToFirebase();
         }
     }
 
-    private void updateToFirestore() {
+    private void updateUserDataAndProfileImageToFirebase() {
+        FirebaseUtil.getCurrentProfilePicture().putFile(selectedImageUri)
+                .addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
+                        updateUserDataToFirebase();
+                    }
+                });
+    }
+
+    private void updateUserDataToFirebase() {
         FirebaseUtil.getCurrentUser().set(currentUser)
                 .addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override

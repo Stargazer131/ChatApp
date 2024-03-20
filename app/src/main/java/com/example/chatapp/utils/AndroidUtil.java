@@ -3,6 +3,7 @@ package com.example.chatapp.utils;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.util.Log;
 import android.widget.ImageView;
 import android.widget.Toast;
 import android.content.DialogInterface;
@@ -42,18 +43,20 @@ public class AndroidUtil {
         return intent;
     }
 
-    /////////////////////////////
-
-    public static void passUserModelAsIntent(Intent intent, User model) {
-        intent.putExtra("username", model.getUsername());
-        intent.putExtra("userId", model.getUserId());
-        intent.putExtra("fcmToken", model.getFcmToken());
-    }
-
-
-
     //
     public static void setProfilePicture(Context context, Uri imageUri, ImageView imageView) {
-        Glide.with(context).load(imageUri).apply(RequestOptions.circleCropTransform()).into(imageView);
+        try {
+            Glide.with(context).load(imageUri).apply(RequestOptions.circleCropTransform()).into(imageView);
+        } catch (Exception ignored) {
+            Log.d("ERROR", "GLIDE CAN'T SET IMAGE");
+        }
+    }
+
+    public static void setImagePicture(Context context, Uri imageUri, ImageView imageView) {
+        try {
+            Glide.with(context).load(imageUri).into(imageView);
+        } catch (Exception ignored) {
+            Log.d("ERROR", "GLIDE CAN'T SET IMAGE");
+        }
     }
 }

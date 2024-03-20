@@ -2,12 +2,11 @@ package com.example.chatapp.adapter;
 
 import android.content.Context;
 import android.net.Uri;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -15,10 +14,10 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.chatapp.R;
-import com.example.chatapp.activity.UserProfileActivity;
 import com.example.chatapp.model.ChatMessage;
 import com.example.chatapp.utils.AndroidUtil;
 import com.example.chatapp.utils.FirebaseUtil;
+import com.example.chatapp.utils.UniformContract;
 import com.firebase.ui.firestore.FirestoreRecyclerAdapter;
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -42,32 +41,48 @@ public class ChatRoomRecyclerAdapter extends
     protected void onBindViewHolder(@NonNull ChatViewHolder holder, int position, @NonNull ChatMessage model) {
         if (model.getSenderId().equals(currentUserId)) {
             holder.rightChatLayout.setVisibility(View.GONE);
-            holder.leftChatLayout.setVisibility(View.VISIBLE);
-            holder.leftChatTextview.setText(model.getMessage());
-
-            FirebaseUtil.getProfilePictureByUserId(currentUserId).getDownloadUrl()
-                    .addOnCompleteListener(new OnCompleteListener<Uri>() {
-                        @Override
-                        public void onComplete(@NonNull Task<Uri> task) {
-                            if (task.isSuccessful()) {
-                                Uri uri = task.getResult();
-                                AndroidUtil.setProfilePicture(context, uri, holder.leftChatImageView);
-                            }
-                        }
-                    });
+            bindItemToView(holder.leftChatLayout, holder.leftChatTextview, holder.leftChatImageProfile,
+                    holder.leftChatImageView, model, currentUserId);
 
         } else {
             holder.leftChatLayout.setVisibility(View.GONE);
-            holder.rightChatLayout.setVisibility(View.VISIBLE);
-            holder.rightChatTextview.setText(model.getMessage());
+            bindItemToView(holder.rightChatLayout, holder.rightChatTextview, holder.rightChatImageProfile,
+                    holder.rightChatImageView, model, otherUserId);
+        }
+    }
 
-            FirebaseUtil.getProfilePictureByUserId(otherUserId).getDownloadUrl()
+    private void bindItemToView(ConstraintLayout chatLayout, TextView chatTextView, ImageView chatImageProfile,
+                                ImageView chatImageView, ChatMessage model, String userId) {
+
+        model.log();
+
+        chatLayout.setVisibility(View.VISIBLE);
+        FirebaseUtil.getProfilePictureByUserId(userId).getDownloadUrl()
+                .addOnCompleteListener(new OnCompleteListener<Uri>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Uri> task) {
+                        if (task.isSuccessful()) {
+                            Uri uri = task.getResult();
+                            AndroidUtil.setProfilePicture(context, uri, chatImageProfile);
+                        }
+                    }
+                });
+
+        if(model.getType().equals(UniformContract.MESSAGE_TYPE_STRING)) {
+            chatTextView.setText(model.getMessage());
+            chatImageView.setVisibility(View.GONE);
+        } else  {
+            chatTextView.setVisibility(View.GONE);
+            FirebaseUtil.getMediaFileOfChatRoomById(model.getChatRoomId(), model.getMediaFileId()).getDownloadUrl()
                     .addOnCompleteListener(new OnCompleteListener<Uri>() {
                         @Override
                         public void onComplete(@NonNull Task<Uri> task) {
                             if (task.isSuccessful()) {
                                 Uri uri = task.getResult();
-                                AndroidUtil.setProfilePicture(context, uri, holder.rightChatImageView);
+                                AndroidUtil.setImagePicture(context, uri, chatImageView);
+                            }
+                            else {
+                                Log.d("ERROR", task.getException().toString());
                             }
                         }
                     });
@@ -84,20 +99,30 @@ public class ChatRoomRecyclerAdapter extends
     class ChatViewHolder extends RecyclerView.ViewHolder {
 
         ConstraintLayout leftChatLayout;
+        TextView leftChatTextview;
+        ImageView leftChatImageProfile;
+        ImageView leftChatImageView;
+
+
+
         ConstraintLayout rightChatLayout;
-        TextView leftChatTextview, rightChatTextview;
-        ImageView leftChatImageView, rightChatImageView;
+        TextView rightChatTextview;
+        ImageView rightChatImageProfile;
+
+        ImageView rightChatImageView;
 
         public ChatViewHolder(@NonNull View itemView) {
             super(itemView);
 
             leftChatLayout = itemView.findViewById(R.id.left_chat_layout);
-            rightChatLayout = itemView.findViewById(R.id.right_chat_layout);
             leftChatTextview = itemView.findViewById(R.id.left_chat_textview);
-            rightChatTextview = itemView.findViewById(R.id.right_chat_textview);
+            leftChatImageProfile = itemView.findViewById(R.id.left_profile_picture);
+            leftChatImageView = itemView.findViewById(R.id.left_chat_imageview);
 
-            leftChatImageView = itemView.findViewById(R.id.left_profile_picture);
-            rightChatImageView = itemView.findViewById(R.id.right_profile_picture);
+            rightChatLayout = itemView.findViewById(R.id.right_chat_layout);
+            rightChatTextview = itemView.findViewById(R.id.right_chat_textview);
+            rightChatImageProfile = itemView.findViewById(R.id.right_profile_picture);
+            rightChatImageView = itemView.findViewById(R.id.right_chat_imageview);
         }
     }
 }
