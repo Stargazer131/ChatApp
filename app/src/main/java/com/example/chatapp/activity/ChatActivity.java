@@ -197,7 +197,6 @@ public class ChatActivity extends AppCompatActivity {
 
         recyclerView.setLayoutManager(manager);
         recyclerView.setAdapter(adapter);
-        recyclerView.getRecycledViewPool().setMaxRecycledViews(0, 0);
         adapter.startListening();
         adapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
             @Override
