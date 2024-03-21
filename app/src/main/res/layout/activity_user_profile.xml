@@ -25,15 +25,15 @@
             android:textStyle="bold" />
 
         <ImageButton
+            android:id="@+id/btn_user_profile_back_home"
             android:layout_width="35dp"
             android:layout_height="35dp"
-            android:src="@drawable/ic_home"
             android:layout_alignParentEnd="true"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            app:tint="@color/white"
             android:layout_centerVertical="true"
             android:layout_marginEnd="10dp"
-            android:id="@+id/btn_user_profile_back_home"/>
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_home"
+            app:tint="@color/white" />
     </RelativeLayout>
 
     <LinearLayout
@@ -66,8 +66,8 @@
             android:orientation="horizontal">
 
             <ImageView
-                android:layout_width="50dp"
-                android:layout_height="50dp"
+                android:layout_width="45dp"
+                android:layout_height="45dp"
                 android:layout_gravity="center_vertical"
                 android:layout_marginEnd="10dp"
                 android:src="@drawable/ic_id_card" />
@@ -79,7 +79,8 @@
                 android:layout_margin="10dp"
                 android:background="@drawable/edit_text_rounded_corner"
                 android:elevation="5dp"
-                android:padding="10dp" />
+                android:padding="10dp"
+                android:textSize="20sp" />
         </LinearLayout>
 
         <!-- Second TextView with icon -->
@@ -89,8 +90,8 @@
             android:orientation="horizontal">
 
             <ImageView
-                android:layout_width="50dp"
-                android:layout_height="50dp"
+                android:layout_width="45dp"
+                android:layout_height="45dp"
                 android:layout_gravity="center_vertical"
                 android:layout_marginEnd="10dp"
                 android:src="@drawable/ic_gmail" />
@@ -102,7 +103,8 @@
                 android:layout_margin="10dp"
                 android:background="@drawable/edit_text_rounded_corner"
                 android:elevation="5dp"
-                android:padding="10dp" />
+                android:padding="10dp"
+                android:textSize="20sp" />
         </LinearLayout>
 
         <LinearLayout
@@ -116,21 +118,20 @@
                 android:layout_weight="1"
                 android:orientation="vertical">
 
-                <ImageButton
-                    android:background="@android:color/transparent"
+                <ImageView
                     android:id="@+id/btn_user_profile_chat"
-                    android:layout_marginBottom="15dp"
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/ic_chat_75dp" />
+                    android:layout_marginBottom="15dp"
+                    android:src="@drawable/ic_chat_app" />
 
                 <TextView
-                    android:layout_gravity="center"
-                    android:textSize="20sp"
-                    android:text="Chats"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="Chats"
+                    android:textSize="20sp" />
 
             </LinearLayout>
 
@@ -140,22 +141,21 @@
                 android:layout_weight="1"
                 android:orientation="vertical">
 
-                <ImageButton
-                    android:background="@android:color/transparent"
+                <ImageView
                     android:id="@+id/btn_user_profile_friend"
-                    android:layout_marginBottom="15dp"
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/ic_friend_request_60dp" />
+                    android:layout_marginBottom="15dp"
+                    android:src="@drawable/ic_friend_request" />
 
                 <TextView
                     android:id="@+id/text_user_profile_friend"
-                    android:layout_gravity="center"
-                    android:textSize="20sp"
-                    android:text="Add friend"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="Add friend"
+                    android:textSize="20sp" />
 
             </LinearLayout>
 

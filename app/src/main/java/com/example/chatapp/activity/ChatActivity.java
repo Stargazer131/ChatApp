@@ -5,14 +5,17 @@ import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.PopupMenu;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -41,6 +44,8 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.storage.UploadTask;
 
@@ -93,22 +98,10 @@ public class ChatActivity extends AppCompatActivity {
         imageView = findViewById(R.id.profile_pic_layout);
         btnAddOtherFile = findViewById(R.id.btn_send_other_file);
 
-        imagePickLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
-                new ActivityResultCallback<ActivityResult>() {
-                    @Override
-                    public void onActivityResult(ActivityResult result) {
-                        if (result.getResultCode() == Activity.RESULT_OK) {
-                            Intent data = result.getData();
-                            if (data != null && data.getData() != null) {
-                                Uri selectedImageUri = data.getData();
-                                sendImageToUser(selectedImageUri);
-                            }
-                        }
-                    }
-                });
-
-
+        changeAvatarProfileColor(otherUser.getStatus());
+        setUpImagePicker();
         setOtherUserData();
+        setUpUserStatusListener();
         btnBackHome.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -138,6 +131,22 @@ public class ChatActivity extends AppCompatActivity {
 
         getOrCreateChatroomModel();
         setupChatRecyclerView();
+    }
+
+    private void setUpImagePicker() {
+        imagePickLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+                new ActivityResultCallback<ActivityResult>() {
+                    @Override
+                    public void onActivityResult(ActivityResult result) {
+                        if (result.getResultCode() == Activity.RESULT_OK) {
+                            Intent data = result.getData();
+                            if (data != null && data.getData() != null) {
+                                Uri selectedImageUri = data.getData();
+                                sendImageToUser(selectedImageUri);
+                            }
+                        }
+                    }
+                });
     }
 
     private void setUpPopupMenu() {
@@ -171,6 +180,42 @@ public class ChatActivity extends AppCompatActivity {
         popupMenu.show();
     }
 
+    private void setUpUserStatusListener() {
+        String tag = "DOCUMENT_LISTENER";
+        FirebaseUtil.getUserById(otherUser.getUserId())
+                .addSnapshotListener(new EventListener<DocumentSnapshot>() {
+                    @Override
+                    public void onEvent(@Nullable DocumentSnapshot value, @Nullable FirebaseFirestoreException error) {
+                        if (error != null) {
+                            Log.w(tag, "Listen failed.", error);
+                            return;
+                        }
+
+                        if (value != null && value.exists()) {
+                            Log.d(tag, "Current data: has changed");
+
+                            // Handle the updated data here, update UI
+                            String status = value.getString("status");
+                            if(status != null) {
+                                changeAvatarProfileColor(status);
+                            }
+
+                        } else {
+                            Log.d(tag, "Current data: null");
+                        }
+                    }
+                });
+    }
+
+    private void changeAvatarProfileColor(String status) {
+        int color = status.equals("online") ?
+                ContextCompat.getColor(ChatActivity.this, R.color.green) :
+                ContextCompat.getColor(ChatActivity.this, R.color.gray);
+
+        ColorStateList colorStateList = ColorStateList.valueOf(color);
+        imageView.setBackgroundTintList(colorStateList);
+    }
+
     private void setOtherUserData() {
         otherUsername.setText(otherUser.getUsername());
         FirebaseUtil.getProfilePictureByUserId(otherUser.getUserId()).getDownloadUrl()
@@ -197,7 +242,6 @@ public class ChatActivity extends AppCompatActivity {
 
         recyclerView.setLayoutManager(manager);
         recyclerView.setAdapter(adapter);
-        adapter.startListening();
         adapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
             @Override
             public void onItemRangeInserted(int positionStart, int itemCount) {
@@ -206,6 +250,22 @@ public class ChatActivity extends AppCompatActivity {
                 recyclerView.smoothScrollToPosition(lastInsertedPosition);
             }
         });
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if(adapter != null) {
+            adapter.startListening();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (adapter != null) {
+            adapter.stopListening();
+        }
+        super.onDestroy();
     }
 
     private void sendMessageToUser(String message) {

@@ -17,14 +17,16 @@ import com.example.chatapp.utils.AndroidUtil;
 import com.example.chatapp.utils.FirebaseUtil;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.button.MaterialButton;
 import com.google.firebase.firestore.DocumentSnapshot;
 
 public class UserProfileActivity extends AppCompatActivity {
     private User user;
     private String userId;
     private ImageView userProfilePicture;
-    private TextView txtUsername, txtEmail, txtFriend;
-    private ImageButton btnChat, btnFriend, btnBackHome;
+    private TextView txtUsername, txtEmail, txtFriend, txtUsernameUserProfile;
+    private ImageButton btnBackHome;
+    private ImageView btnChat, btnFriend;
 
 
     @Override
@@ -39,6 +41,7 @@ public class UserProfileActivity extends AppCompatActivity {
         btnChat = findViewById(R.id.btn_user_profile_chat);
         btnFriend = findViewById(R.id.btn_user_profile_friend);
         btnBackHome = findViewById(R.id.btn_user_profile_back_home);
+        txtUsernameUserProfile = findViewById(R.id.text_username_user_profile);
         userId = getIntent().getExtras().getString("userId");
 
         btnBackHome.setOnClickListener(new View.OnClickListener() {
@@ -58,10 +61,10 @@ public class UserProfileActivity extends AppCompatActivity {
             }
         });
 
-        getUserData();
+        setUserData();
     }
 
-    private void getUserData() {
+    private void setUserData() {
         FirebaseUtil.getProfilePictureByUserId(userId).getDownloadUrl()
                 .addOnCompleteListener(new OnCompleteListener<Uri>() {
                     @Override
@@ -80,7 +83,6 @@ public class UserProfileActivity extends AppCompatActivity {
                     user = task.getResult().toObject(User.class);
                     txtUsername.setText(user.getUsername());
                     txtEmail.setText(user.getEmail());
-
                 }
             }
         });

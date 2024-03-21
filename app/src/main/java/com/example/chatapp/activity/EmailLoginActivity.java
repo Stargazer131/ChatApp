@@ -11,6 +11,7 @@ import android.widget.EditText;
 
 import com.example.chatapp.R;
 import com.example.chatapp.utils.AndroidUtil;
+import com.example.chatapp.utils.FirebaseUtil;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.button.MaterialButton;
@@ -80,13 +81,18 @@ public class EmailLoginActivity extends AppCompatActivity {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
+                            String userId = task.getResult().getUser().getUid();
+                            FirebaseUtil.updateUserStatus(userId, "online");
+
                             Intent intent = new Intent(EmailLoginActivity.this, MainActivity.class);
                             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                             startActivity(intent);
+
                         } else {
                             Exception exception = task.getException();
                             String errorMessage = exception.getMessage();
                             AndroidUtil.showToast(EmailLoginActivity.this, "Login failed: " + errorMessage);
+
                         }
                         btnLogin.setEnabled(true);
                         btnRegister.setEnabled(true);

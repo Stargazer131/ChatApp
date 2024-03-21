@@ -68,10 +68,10 @@ public class SearchUserActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
+    protected void onDestroy() {
         if (adapter != null) {
             adapter.stopListening();
         }
+        super.onDestroy();
     }
 }

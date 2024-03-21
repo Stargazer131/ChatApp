@@ -36,6 +36,14 @@ public class FirebaseUtil {
         FirebaseAuth.getInstance().signOut();
     }
 
+    public static void updateUserStatus(String userId, String status) {
+        FirebaseUtil.getUserById(userId).update("status", status);
+    }
+
+    public static void updateUserStatus(String status) {
+        updateUserStatus(getCurrentUserId(), status);
+    }
+
     //////
 
     public static CollectionReference getAllUser() {

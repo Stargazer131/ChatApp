@@ -2,6 +2,7 @@ package com.example.chatapp.activity;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ProcessLifecycleOwner;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,6 +11,7 @@ import android.util.Log;
 
 import com.example.chatapp.R;
 import com.example.chatapp.model.User;
+import com.example.chatapp.utils.AppLifecycleListener;
 import com.example.chatapp.utils.FirebaseUtil;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -21,6 +23,7 @@ public class SplashActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
+        ProcessLifecycleOwner.get().getLifecycle().addObserver(new AppLifecycleListener());
 
         Bundle extras = getIntent().getExtras();
         String userId = (extras != null) ? extras.getString("userId") : null;
