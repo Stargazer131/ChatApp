@@ -124,7 +124,7 @@
                     android:layout_height="60dp"
                     android:layout_gravity="center"
                     android:layout_marginBottom="15dp"
-                    android:src="@drawable/ic_chat_app" />
+                    android:src="@drawable/icon_chat" />
 
                 <TextView
                     android:layout_width="wrap_content"

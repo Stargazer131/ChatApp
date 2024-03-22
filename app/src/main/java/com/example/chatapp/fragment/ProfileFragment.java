@@ -4,15 +4,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,21 +11,18 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 
-import com.example.chatapp.activity.SplashActivity;
-import com.example.chatapp.utils.AndroidUtil;
-import com.example.chatapp.utils.FirebaseUtil;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
 
 import com.example.chatapp.R;
+import com.example.chatapp.activity.SplashActivity;
 import com.example.chatapp.model.User;
+import com.example.chatapp.utility.AndroidUtility;
+import com.example.chatapp.utility.FirebaseUtility;
 import com.github.dhaval2404.imagepicker.ImagePicker;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.messaging.FirebaseMessaging;
-import com.google.firebase.storage.UploadTask;
-
-import kotlin.Unit;
-import kotlin.jvm.functions.Function1;
 
 public class ProfileFragment extends Fragment {
 
@@ -54,15 +42,12 @@ public class ProfileFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         imagePickLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
-                new ActivityResultCallback<ActivityResult>() {
-                    @Override
-                    public void onActivityResult(ActivityResult result) {
-                        if (result.getResultCode() == Activity.RESULT_OK) {
-                            Intent data = result.getData();
-                            if (data != null && data.getData() != null) {
-                                selectedImageUri = data.getData();
-                                AndroidUtil.setProfilePicture(getContext(), selectedImageUri, profilePic);
-                            }
+                result -> {
+                    if (result.getResultCode() == Activity.RESULT_OK) {
+                        Intent data = result.getData();
+                        if (data != null && data.getData() != null) {
+                            selectedImageUri = data.getData();
+                            AndroidUtility.setProfilePicture(getContext(), selectedImageUri, profilePic);
                         }
                     }
                 });
@@ -79,49 +64,32 @@ public class ProfileFragment extends Fragment {
         logoutBtn = view.findViewById(R.id.btn_profile_logout);
         getUserData();
 
-        updateProfileBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                updateBtnClick();
-            }
+        updateProfileBtn.setOnClickListener(v -> updateBtnClick());
+
+        logoutBtn.setOnClickListener(v -> {
+            updateProfileBtn.setEnabled(false);
+            FirebaseMessaging.getInstance().deleteToken().addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    FirebaseUtility.updateUserStatus(currentUser.getUserId(), "offline");
+                    FirebaseUtility.logout();
+
+                    Intent intent = new Intent(getContext(), SplashActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                } else {
+                    AndroidUtility.showToast(getContext(), "Can't delete token");
+                }
+            });
         });
 
-        logoutBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                updateProfileBtn.setEnabled(false);
-                FirebaseMessaging.getInstance().deleteToken().addOnCompleteListener(new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        if (task.isSuccessful()) {
-                            FirebaseUtil.updateUserStatus(currentUser.getUserId(), "offline");
-                            FirebaseUtil.logout();
-
-                            Intent intent = new Intent(getContext(), SplashActivity.class);
-                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                            startActivity(intent);
-                        } else {
-                            AndroidUtil.showToast(getContext(), "Can't delete token");
-                        }
-                    }
-                });
-            }
-        });
-
-        profilePic.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ImagePicker.with(ProfileFragment.this).cropSquare()
-                        .compress(512).maxResultSize(512, 512)
-                        .createIntent(new Function1<Intent, Unit>() {
-                            @Override
-                            public Unit invoke(Intent intent) {
-                                imagePickLauncher.launch(intent);
-                                return null;
-                            }
-                        });
-            }
-        });
+        profilePic.setOnClickListener(v -> ImagePicker.with(ProfileFragment.this)
+                .cropSquare()
+                .compress(512)
+                .maxResultSize(512, 512)
+                .createIntent(intent -> {
+                    imagePickLauncher.launch(intent);
+                    return null;
+                }));
 
         return view;
     }
@@ -144,56 +112,42 @@ public class ProfileFragment extends Fragment {
     }
 
     private void updateUserDataAndProfileImageToFirebase() {
-        FirebaseUtil.getCurrentProfilePicture().putFile(selectedImageUri)
-                .addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
-                        updateUserDataToFirebase();
-                    }
-                });
+        FirebaseUtility.getCurrentProfilePicture().putFile(selectedImageUri)
+                .addOnCompleteListener(task -> updateUserDataToFirebase());
     }
 
     private void updateUserDataToFirebase() {
-        FirebaseUtil.getCurrentUser().set(currentUser)
-                .addOnCompleteListener(new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        if (task.isSuccessful()) {
-                            AndroidUtil.showToast(getContext(), "Updated successfully");
-                        } else {
-                            AndroidUtil.showToast(getContext(), "Updated failed");
-                        }
+        FirebaseUtility.getCurrentUser().set(currentUser)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        AndroidUtility.showToast(getContext(), "Updated successfully");
+                    } else {
+                        AndroidUtility.showToast(getContext(), "Updated failed");
+                    }
 
-                        try {
-                            updateProfileBtn.setEnabled(true);
-                            logoutBtn.setEnabled(true);
-                        } catch (Exception ignored) {
+                    try {
+                        updateProfileBtn.setEnabled(true);
+                        logoutBtn.setEnabled(true);
+                    } catch (Exception ignored) {
 
-                        }
                     }
                 });
     }
 
 
     private void getUserData() {
-        FirebaseUtil.getCurrentProfilePicture().getDownloadUrl()
-                .addOnCompleteListener(new OnCompleteListener<Uri>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Uri> task) {
-                        if (task.isSuccessful()) {
-                            Uri uri = task.getResult();
-                            AndroidUtil.setProfilePicture(getContext(), uri, profilePic);
-                        }
+        FirebaseUtility.getCurrentProfilePicture().getDownloadUrl()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Uri uri = task.getResult();
+                        AndroidUtility.setProfilePicture(getContext(), uri, profilePic);
                     }
                 });
 
-        FirebaseUtil.getCurrentUser().get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                currentUser = task.getResult().toObject(User.class);
-                usernameInput.setText(currentUser.getUsername());
-                emailInput.setText(currentUser.getEmail());
-            }
+        FirebaseUtility.getCurrentUser().get().addOnCompleteListener(task -> {
+            currentUser = task.getResult().toObject(User.class);
+            usernameInput.setText(currentUser.getUsername());
+            emailInput.setText(currentUser.getEmail());
         });
     }
 }

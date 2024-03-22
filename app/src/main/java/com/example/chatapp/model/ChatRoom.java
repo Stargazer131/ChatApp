@@ -2,9 +2,10 @@ package com.example.chatapp.model;
 
 import com.google.firebase.Timestamp;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class ChatRoom {
+public class ChatRoom implements Serializable {
     String chatroomId;
     List<String> userIds;
     Timestamp lastMessageTimestamp;

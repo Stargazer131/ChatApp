@@ -2,6 +2,8 @@ package com.example.chatapp.model;
 
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import com.google.firebase.Timestamp;
 
 public class ChatMessage {
@@ -72,6 +74,7 @@ public class ChatMessage {
         this.timestamp = timestamp;
     }
 
+    @NonNull
     @Override
     public String toString() {
         return "ChatMessage{" +

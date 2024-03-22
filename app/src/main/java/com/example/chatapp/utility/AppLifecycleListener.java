@@ -1,4 +1,4 @@
-package com.example.chatapp.utils;
+package com.example.chatapp.utility;
 
 import android.util.Log;
 
@@ -12,16 +12,16 @@ public class AppLifecycleListener implements DefaultLifecycleObserver {
     @Override
     public void onStart(@NonNull LifecycleOwner owner) {
         Log.i(TAG, "Moved to foreground");
-        if(FirebaseUtil.isLoggedIn()) {
-            FirebaseUtil.updateUserStatus("online");
+        if(FirebaseUtility.isLoggedIn()) {
+            FirebaseUtility.updateUserStatus("online");
         }
     }
 
     @Override
     public void onStop(@NonNull LifecycleOwner owner) {
         Log.i(TAG, "Moved to background");
-        if(FirebaseUtil.isLoggedIn()) {
-            FirebaseUtil.updateUserStatus("offline");
+        if(FirebaseUtility.isLoggedIn()) {
+            FirebaseUtility.updateUserStatus("offline");
         }
     }
 }

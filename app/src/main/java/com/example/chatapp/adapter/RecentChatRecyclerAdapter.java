@@ -3,6 +3,7 @@ package com.example.chatapp.adapter;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,17 +14,14 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.chatapp.activity.ChatActivity;
 import com.example.chatapp.R;
+import com.example.chatapp.activity.ChatActivity;
 import com.example.chatapp.model.ChatRoom;
 import com.example.chatapp.model.User;
-import com.example.chatapp.utils.AndroidUtil;
-import com.example.chatapp.utils.FirebaseUtil;
+import com.example.chatapp.utility.AndroidUtility;
+import com.example.chatapp.utility.FirebaseUtility;
 import com.firebase.ui.firestore.FirestoreRecyclerAdapter;
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.firestore.DocumentSnapshot;
 
 public class RecentChatRecyclerAdapter
         extends FirestoreRecyclerAdapter<ChatRoom, RecentChatRecyclerAdapter.RecentChatModelViewHolder> {
@@ -37,52 +35,66 @@ public class RecentChatRecyclerAdapter
     @Override
     protected void onBindViewHolder(@NonNull RecentChatModelViewHolder holder, int position, @NonNull ChatRoom model) {
         if (model.getLastMessageSenderId().equals("")) {
-//            holder.parent.setLayoutParams(new RecyclerView.LayoutParams(0, 0));
+            holder.parent.setLayoutParams(new RecyclerView.LayoutParams(0, 0));
         }
 
-        FirebaseUtil.getOtherUserFromChatroom(model.getUserIds())
-                .get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                        if (task.isSuccessful()) {
-
-                        boolean lastMessageSentByMe = model.getLastMessageSenderId().equals(FirebaseUtil.getCurrentUserId());
+        FirebaseUtility.getOtherUserFromChatroom(model.getUserIds())
+                .get().addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        boolean lastMessageSentByMe = model.getLastMessageSenderId().equals(FirebaseUtility.getCurrentUserId());
                         User otherUser = task.getResult().toObject(User.class);
 
-                        FirebaseUtil.getProfilePictureByUserId(otherUser.getUserId()).getDownloadUrl()
-                                .addOnCompleteListener(new OnCompleteListener<Uri>() {
-                                    @Override
-                                    public void onComplete(@NonNull Task<Uri> task) {
-                                        if (task.isSuccessful()) {
-                                            Uri uri = task.getResult();
-                                            AndroidUtil.setProfilePicture(context, uri, holder.profilePic);
-                                        }
-                                    }
-                                });
-
-                            if (lastMessageSentByMe) {
-                                holder.lastMessageText.setText(String.format("You : %s", model.getLastMessage()));
-                            } else {
-                                holder.lastMessageText.setText(
-                                        String.format("%s : %s", otherUser.getUsername(),model.getLastMessage())
-                                );
-                            }
-
-                            holder.usernameText.setText(otherUser.getUsername());
-                            holder.lastMessageTime.setText(FirebaseUtil.timestampToHourMinuteString(model.getLastMessageTimestamp()));
-                            holder.itemView.setOnClickListener(new View.OnClickListener() {
-                                @Override
-                                public void onClick(View v) {
-                                    //navigate to chat activity
-                                    Intent intent = new Intent(context, ChatActivity.class);
-
-                                    intent.putExtra("otherUser", otherUser);
-                                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
-                                    context.startActivity(intent);
-                                }
-                            });
+                        AndroidUtility.changeAvatarProfileColor(otherUser.getStatus(), holder.profilePic, context);
+                        setOtherUserAvatar(otherUser.getUserId(), holder);
+                        if (lastMessageSentByMe) {
+                            holder.lastMessageText.setText(String.format("You : %s", model.getLastMessage()));
+                        } else {
+                            holder.lastMessageText.setText(
+                                    String.format("%s : %s", otherUser.getUsername(), model.getLastMessage())
+                            );
                         }
+
+                        holder.usernameText.setText(otherUser.getUsername());
+                        holder.lastMessageTime.setText(FirebaseUtility.timestampToHourMinuteString(model.getLastMessageTimestamp()));
+                        holder.itemView.setOnClickListener(v -> openChatActivity(otherUser, model.getChatroomId()));
+                    }
+                });
+
+        FirebaseUtility.getOtherUserFromChatroom(model.getUserIds())
+                .addSnapshotListener((value, error) -> {
+                    String tag = "RECENT_CHAT_USER_DOCUMENT_LISTENER";
+                    if (error != null) {
+                        Log.w(tag, "Listen failed.", error);
+                        return;
+                    }
+
+                    if (value != null && value.exists()) {
+                        Log.d(tag, "Current data: has changed");
+                        String status = value.getString("status");
+                        if(status != null) {
+                            AndroidUtility.changeAvatarProfileColor(status, holder.profilePic, context);
+                        }
+                    } else {
+                        Log.d(tag, "Current data: null");
+                    }
+                });
+    }
+
+    private void openChatActivity(User otherUser, String chatRoomId) {
+        //navigate to chat activity
+        Intent intent = new Intent(context, ChatActivity.class);
+        intent.putExtra("otherUser", otherUser);
+        intent.putExtra("chatRoomId", chatRoomId);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(intent);
+    }
+
+    private void setOtherUserAvatar(String userId, @NonNull RecentChatModelViewHolder holder) {
+        FirebaseUtility.getProfilePictureByUserId(userId).getDownloadUrl()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Uri uri = task.getResult();
+                        AndroidUtility.setProfilePicture(context, uri, holder.profilePic);
                     }
                 });
     }

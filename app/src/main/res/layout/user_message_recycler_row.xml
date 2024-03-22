@@ -21,7 +21,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-
         <TextView
             android:id="@+id/left_chat_textview"
             android:layout_width="wrap_content"
@@ -32,8 +31,8 @@
             android:backgroundTint="@color/chat_color_sender"
             android:padding="8dp"
             android:text="Hello"
-
             android:textColor="@color/white"
+            android:textIsSelectable="true"
             android:textSize="20sp"
             app:layout_constrainedWidth="true"
             app:layout_constraintEnd_toEndOf="parent"

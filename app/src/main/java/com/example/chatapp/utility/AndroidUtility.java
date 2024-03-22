@@ -1,32 +1,29 @@
-package com.example.chatapp.utils;
+package com.example.chatapp.utility;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
+import android.content.res.ColorStateList;
 import android.net.Uri;
 import android.util.Log;
+import android.util.Patterns;
 import android.widget.ImageView;
 import android.widget.Toast;
-import android.content.DialogInterface;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.DataSource;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.load.engine.GlideException;
-import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.RequestOptions;
-import com.bumptech.glide.request.target.DrawableImageViewTarget;
-import com.bumptech.glide.request.target.Target;
-import com.example.chatapp.activity.ChatActivity;
+import com.example.chatapp.R;
 import com.example.chatapp.activity.MainActivity;
-import com.example.chatapp.model.User;
+
+import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
-public class AndroidUtil {
+public class AndroidUtility {
 
     public static void showToast(Context context, String message) {
         Toast.makeText(context, message, Toast.LENGTH_LONG).show();
@@ -73,5 +70,28 @@ public class AndroidUtil {
         } catch (Exception ignored) {
             Log.d("ERROR", "GLIDE CAN'T SET IMAGE");
         }
+    }
+
+    public static void changeAvatarProfileColor(String status, ImageView imageView, Context context) {
+        int color = status.equals("online") ?
+                ContextCompat.getColor(context, R.color.green) :
+                ContextCompat.getColor(context, R.color.gray);
+
+        ColorStateList colorStateList = ColorStateList.valueOf(color);
+        imageView.setBackgroundTintList(colorStateList);
+    }
+
+    public static ArrayList<UrlString> findUrlPatterns(String text) {
+        Pattern pattern = Patterns.WEB_URL;
+        Matcher matcher = pattern.matcher(text);
+
+        ArrayList<UrlString> urls = new ArrayList<>();
+        while (matcher.find()) {
+            String url = matcher.group();
+            int startIndex = matcher.start();
+            int endIndex = matcher.end();
+            urls.add(new UrlString(url, startIndex, endIndex));
+        }
+        return urls;
     }
 }

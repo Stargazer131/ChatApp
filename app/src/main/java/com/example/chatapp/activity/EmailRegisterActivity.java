@@ -1,22 +1,16 @@
 package com.example.chatapp.activity;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Patterns;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.example.chatapp.R;
 import com.example.chatapp.model.User;
-import com.example.chatapp.utils.AndroidUtil;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.AuthResult;
+import com.example.chatapp.utility.AndroidUtility;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -37,15 +31,12 @@ public class EmailRegisterActivity extends AppCompatActivity {
         registerButton = findViewById(R.id.btn_email_register);
         firebaseAuth = FirebaseAuth.getInstance();
 
-        registerButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String username = usernameEditText.getText().toString().trim();
-                String email = emailEditText.getText().toString().trim();
-                String password = passwordEditText.getText().toString().trim();
-                String reenteredPassword = reenteredPasswordEditText.getText().toString().trim();
-                register(username, email, password, reenteredPassword);
-            }
+        registerButton.setOnClickListener(v -> {
+            String username = usernameEditText.getText().toString().trim();
+            String email = emailEditText.getText().toString().trim();
+            String password = passwordEditText.getText().toString().trim();
+            String reenteredPassword = reenteredPasswordEditText.getText().toString().trim();
+            register(username, email, password, reenteredPassword);
         });
     }
 
@@ -57,55 +48,43 @@ public class EmailRegisterActivity extends AppCompatActivity {
         // register account with firebase
         registerButton.setEnabled(false);
         firebaseAuth.createUserWithEmailAndPassword(email, password)
-                .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        if (task.isSuccessful()) {
-                            String uid = task.getResult().getUser().getUid();
-                            User user = new User(username, uid, email);
-                            addUserToFirebase(uid, user, password);
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        String uid = task.getResult().getUser().getUid();
+                        User user = new User(username, uid, email);
+                        addUserToFirebase(uid, user, password);
 
-                        } else {
-                            Exception exception = task.getException();
-                            String errorMessage = exception.getMessage();
-                            AndroidUtil.showToast(EmailRegisterActivity.this, "Registration failed: " + errorMessage);
-                        }
-
-                        registerButton.setEnabled(true);
+                    } else {
+                        Exception exception = task.getException();
+                        String errorMessage = exception.getMessage();
+                        AndroidUtility.showToast(EmailRegisterActivity.this, "Registration failed: " + errorMessage);
                     }
+
+                    registerButton.setEnabled(true);
                 });
     }
 
     private void addUserToFirebase(String uid, User user, String password) {
         FirebaseFirestore.getInstance().collection("users").document(uid).set(user)
-                .addOnCompleteListener(new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        if (task.isSuccessful()) {
-                            AndroidUtil.showToast(EmailRegisterActivity.this, "Registration Completed");
-                            AndroidUtil.showOptionPanel(EmailRegisterActivity.this, "Confirmation", "Go back to Login Screen with your new account?",
-                                    "Yes", "No",
-                                    new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            // yes
-                                            Intent intent = new Intent(EmailRegisterActivity.this, EmailLoginActivity.class);
-                                            intent.putExtra("email", user.getEmail());
-                                            intent.putExtra("password", password);
-                                            startActivity(intent);
-                                        }
-                                    },
-                                    new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            // no
-                                        }
-                                    });
-                        } else {
-                            Exception exception = task.getException();
-                            String errorMessage = exception.getMessage();
-                            AndroidUtil.showToast(EmailRegisterActivity.this, "Registration failed: " + errorMessage);
-                        }
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        AndroidUtility.showToast(EmailRegisterActivity.this, "Registration Completed");
+                        AndroidUtility.showOptionPanel(EmailRegisterActivity.this, "Confirmation", "Go back to Login Screen with your new account?",
+                                "Yes", "No",
+                                (dialog, which) -> {
+                                    // yes
+                                    Intent intent = new Intent(EmailRegisterActivity.this, EmailLoginActivity.class);
+                                    intent.putExtra("email", user.getEmail());
+                                    intent.putExtra("password", password);
+                                    startActivity(intent);
+                                },
+                                (dialog, which) -> {
+                                    // no
+                                });
+                    } else {
+                        Exception exception = task.getException();
+                        String errorMessage = exception.getMessage();
+                        AndroidUtility.showToast(EmailRegisterActivity.this, "Registration failed: " + errorMessage);
                     }
                 });
     }

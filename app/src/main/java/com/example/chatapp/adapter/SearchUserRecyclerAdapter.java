@@ -13,16 +13,13 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.chatapp.activity.ChatActivity;
 import com.example.chatapp.R;
 import com.example.chatapp.activity.UserProfileActivity;
 import com.example.chatapp.model.User;
-import com.example.chatapp.utils.AndroidUtil;
-import com.example.chatapp.utils.FirebaseUtil;
+import com.example.chatapp.utility.AndroidUtility;
+import com.example.chatapp.utility.FirebaseUtility;
 import com.firebase.ui.firestore.FirestoreRecyclerAdapter;
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 
 public class SearchUserRecyclerAdapter extends
         FirestoreRecyclerAdapter<User, SearchUserRecyclerAdapter.SearchUserViewHolder> {
@@ -38,31 +35,25 @@ public class SearchUserRecyclerAdapter extends
     protected void onBindViewHolder(@NonNull SearchUserViewHolder holder, int position, @NonNull User model) {
         holder.usernameText.setText(model.getUsername());
         holder.emailText.setText(model.getEmail());
-        if (model.getUserId().equals(FirebaseUtil.getCurrentUserId())) {
+        if (model.getUserId().equals(FirebaseUtility.getCurrentUserId())) {
             holder.usernameText.setText(String.format("%s (Me)", model.getUsername()));
             holder.itemView.setEnabled(false);
         }
 
-        FirebaseUtil.getProfilePictureByUserId(model.getUserId()).getDownloadUrl()
-                .addOnCompleteListener(new OnCompleteListener<Uri>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Uri> task) {
-                        if (task.isSuccessful()) {
-                            Uri uri = task.getResult();
-                            AndroidUtil.setProfilePicture(context, uri, holder.profilePicture);
-                        }
+        FirebaseUtility.getProfilePictureByUserId(model.getUserId()).getDownloadUrl()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Uri uri = task.getResult();
+                        AndroidUtility.setProfilePicture(context, uri, holder.profilePicture);
                     }
                 });
 
-        holder.itemView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                //navigate to user profile activity
-                Intent intent = new Intent(context, UserProfileActivity.class);
-                intent.putExtra("userId", model.getUserId());
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                context.startActivity(intent);
-            }
+        holder.itemView.setOnClickListener(v -> {
+            //navigate to user profile activity
+            Intent intent = new Intent(context, UserProfileActivity.class);
+            intent.putExtra("userId", model.getUserId());
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
         });
     }
 

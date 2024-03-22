@@ -1,4 +1,4 @@
-package com.example.chatapp.utils;
+package com.example.chatapp.utility;
 
 
 import com.google.firebase.Timestamp;
@@ -15,7 +15,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class FirebaseUtil {
+public class FirebaseUtility {
     public static String getCurrentUserId() {
         return FirebaseAuth.getInstance().getUid();
     }
@@ -37,7 +37,7 @@ public class FirebaseUtil {
     }
 
     public static void updateUserStatus(String userId, String status) {
-        FirebaseUtil.getUserById(userId).update("status", status);
+        FirebaseUtility.getUserById(userId).update("status", status);
     }
 
     public static void updateUserStatus(String status) {
@@ -62,10 +62,6 @@ public class FirebaseUtil {
         return FirebaseFirestore.getInstance().collection("chatrooms");
     }
 
-    public static DocumentReference getChatMessageById(String chatroomId, String messageId) {
-        return getAllChatMessageOfChatRoomById(chatroomId).document(messageId);
-    }
-
     public static String getChatRoomId(String userId1, String userId2) {
         if (userId1.hashCode() < userId2.hashCode()) {
             return userId1 + "_" + userId2;
@@ -75,7 +71,7 @@ public class FirebaseUtil {
     }
 
     public static DocumentReference getOtherUserFromChatroom(List<String> userIds) {
-        if (userIds.get(0).equals(FirebaseUtil.getCurrentUserId())) {
+        if (userIds.get(0).equals(FirebaseUtility.getCurrentUserId())) {
             return getAllUser().document(userIds.get(1));
         } else {
             return getAllUser().document(userIds.get(0));
@@ -83,7 +79,7 @@ public class FirebaseUtil {
     }
 
     public static StorageReference getCurrentProfilePicture() {
-        return getProfilePictureByUserId(FirebaseUtil.getCurrentUserId());
+        return getProfilePictureByUserId(FirebaseUtility.getCurrentUserId());
     }
 
     public static StorageReference getProfilePictureByUserId(String userId) {

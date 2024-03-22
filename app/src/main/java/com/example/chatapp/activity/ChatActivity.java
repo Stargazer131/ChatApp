@@ -1,61 +1,41 @@
 package com.example.chatapp.activity;
 
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.PopupMenu;
-import androidx.core.content.ContextCompat;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.ColorStateList;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.MenuItem;
-import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.PopupMenu;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.chatapp.R;
 import com.example.chatapp.adapter.ChatRoomRecyclerAdapter;
-import com.example.chatapp.fragment.ProfileFragment;
 import com.example.chatapp.model.ChatMessage;
 import com.example.chatapp.model.ChatRoom;
 import com.example.chatapp.model.User;
-import com.example.chatapp.utils.AndroidUtil;
-import com.example.chatapp.utils.FirebaseUtil;
-import com.example.chatapp.utils.UniformContract;
+import com.example.chatapp.utility.AndroidUtility;
+import com.example.chatapp.utility.FirebaseUtility;
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
-import com.github.dhaval2404.imagepicker.ImagePicker;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.Timestamp;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.EventListener;
-import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.Query;
-import com.google.firebase.storage.UploadTask;
 
 import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.Arrays;
 
-import kotlin.Unit;
-import kotlin.jvm.functions.Function1;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.MediaType;
@@ -67,8 +47,8 @@ import okhttp3.Response;
 public class ChatActivity extends AppCompatActivity {
 
     private User otherUser;
-    private String chatroomId;
     private ChatRoom chatRoom;
+    private String chatroomId;
     private ChatRoomRecyclerAdapter adapter;
 
     private EditText messageInput;
@@ -76,10 +56,16 @@ public class ChatActivity extends AppCompatActivity {
     private ImageButton btnBackHome;
     private TextView otherUsername;
     private RecyclerView recyclerView;
-    private ImageView imageView;
+    private ImageView otherUserProfileImageView;
     private PopupMenu popupMenu;
     // for sending image
-    private ActivityResultLauncher<Intent> imagePickLauncher;
+    private ActivityResultLauncher<PickVisualMediaRequest> imagePickerLauncher;
+    private ActivityResultLauncher<PickVisualMediaRequest> videoPickerLauncher;
+    public static final String MESSAGE_TYPE_STRING = "String";
+    public static final String MESSAGE_TYPE_IMAGE = "Image";
+    public static final String MESSAGE_TYPE_VIDEO = "Video";
+    public static final String MESSAGE_TYPE_AUDIO = "Audio";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,65 +74,56 @@ public class ChatActivity extends AppCompatActivity {
 
         //get UserModel
         otherUser = (User) getIntent().getSerializableExtra("otherUser");
-        chatroomId = FirebaseUtil.getChatRoomId(FirebaseUtil.getCurrentUserId(), otherUser.getUserId());
+        chatroomId = getIntent().getStringExtra("chatRoomId");
 
         messageInput = findViewById(R.id.chat_message_input);
         sendMessageBtn = findViewById(R.id.message_send_btn);
         btnBackHome = findViewById(R.id.btn_back_home);
         otherUsername = findViewById(R.id.other_username);
         recyclerView = findViewById(R.id.chat_recycler_view);
-        imageView = findViewById(R.id.profile_pic_layout);
+        otherUserProfileImageView = findViewById(R.id.profile_pic_layout);
         btnAddOtherFile = findViewById(R.id.btn_send_other_file);
 
-        changeAvatarProfileColor(otherUser.getStatus());
+        AndroidUtility.changeAvatarProfileColor(otherUser.getStatus(), otherUserProfileImageView, ChatActivity.this);
         setUpImagePicker();
+        setUpVideoPicker();
         setOtherUserData();
         setUpUserStatusListener();
-        btnBackHome.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(AndroidUtil.getBackHomeIntent(ChatActivity.this));
-            }
-        });
-
-        sendMessageBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String message = messageInput.getText().toString().trim();
-                if (message.isEmpty()) {
-                    return;
-                }
-                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.hideSoftInputFromWindow(messageInput.getWindowToken(), 0);
-                sendMessageToUser(message);
-            }
-        });
-
-        btnAddOtherFile.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                setUpPopupMenu();
-            }
-        });
-
         getOrCreateChatroomModel();
         setupChatRecyclerView();
+
+        btnBackHome.setOnClickListener(v -> startActivity(AndroidUtility.getBackHomeIntent(ChatActivity.this)));
+        sendMessageBtn.setOnClickListener(v -> {
+            String message = messageInput.getText().toString().trim();
+            if (message.isEmpty()) {
+                return;
+            }
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(messageInput.getWindowToken(), 0);
+            sendMessageToUser(message);
+        });
+        btnAddOtherFile.setOnClickListener(v -> setUpPopupMenu());
+        otherUserProfileImageView.setOnClickListener(v -> {
+            Intent intent = new Intent(ChatActivity.this, UserProfileActivity.class);
+            intent.putExtra("userId", otherUser.getUserId());
+            startActivity(intent);
+        });
+    }
+
+    private void setUpVideoPicker() {
+        videoPickerLauncher = registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), o -> {
+            if (o != null) {
+                sendMediaFileToUser(o, MESSAGE_TYPE_VIDEO);
+            }
+        });
     }
 
     private void setUpImagePicker() {
-        imagePickLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
-                new ActivityResultCallback<ActivityResult>() {
-                    @Override
-                    public void onActivityResult(ActivityResult result) {
-                        if (result.getResultCode() == Activity.RESULT_OK) {
-                            Intent data = result.getData();
-                            if (data != null && data.getData() != null) {
-                                Uri selectedImageUri = data.getData();
-                                sendImageToUser(selectedImageUri);
-                            }
-                        }
-                    }
-                });
+        imagePickerLauncher = registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), o -> {
+            if (o != null) {
+                sendMediaFileToUser(o, MESSAGE_TYPE_IMAGE);
+            }
+        });
     }
 
     private void setUpPopupMenu() {
@@ -154,92 +131,65 @@ public class ChatActivity extends AppCompatActivity {
         popupMenu.getMenuInflater().inflate(R.menu.pop_up_other_file_menu, popupMenu.getMenu());
         popupMenu.setForceShowIcon(true);
 
-        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                if (item.getItemId() == R.id.menu_item_image) {
-                    ImagePicker.with(ChatActivity.this)
-                            .compress(512)
-                            .maxResultSize(512, 512)
-                            .createIntent(new Function1<Intent, Unit>() {
-                                @Override
-                                public Unit invoke(Intent intent) {
-                                    imagePickLauncher.launch(intent);
-                                    return null;
-                                }
-                            });
-                }
-                if (item.getItemId() == R.id.menu_item_video) {
-
-                }
-
-                return true;
+        popupMenu.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == R.id.menu_item_image) {
+                imagePickerLauncher.launch(new PickVisualMediaRequest.Builder()
+                        .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
+                        .build());
             }
+            if (item.getItemId() == R.id.menu_item_video) {
+                videoPickerLauncher.launch(new PickVisualMediaRequest.Builder()
+                        .setMediaType(ActivityResultContracts.PickVisualMedia.VideoOnly.INSTANCE)
+                        .build());
+            }
+
+            return true;
         });
 
         popupMenu.show();
     }
 
     private void setUpUserStatusListener() {
-        String tag = "DOCUMENT_LISTENER";
-        FirebaseUtil.getUserById(otherUser.getUserId())
-                .addSnapshotListener(new EventListener<DocumentSnapshot>() {
-                    @Override
-                    public void onEvent(@Nullable DocumentSnapshot value, @Nullable FirebaseFirestoreException error) {
-                        if (error != null) {
-                            Log.w(tag, "Listen failed.", error);
-                            return;
+        FirebaseUtility.getUserById(otherUser.getUserId())
+                .addSnapshotListener((value, error) -> {
+                    String tag = "CHAT_USER_DOCUMENT_LISTENER";
+                    if (error != null) {
+                        Log.w(tag, "Listen failed.", error);
+                        return;
+                    }
+
+                    if (value != null && value.exists()) {
+                        Log.d(tag, "Current data: has changed");
+                        String status = value.getString("status");
+                        if (status != null) {
+                            AndroidUtility.changeAvatarProfileColor(status, otherUserProfileImageView, ChatActivity.this);
                         }
-
-                        if (value != null && value.exists()) {
-                            Log.d(tag, "Current data: has changed");
-
-                            // Handle the updated data here, update UI
-                            String status = value.getString("status");
-                            if(status != null) {
-                                changeAvatarProfileColor(status);
-                            }
-
-                        } else {
-                            Log.d(tag, "Current data: null");
-                        }
+                    } else {
+                        Log.d(tag, "Current data: null");
                     }
                 });
     }
 
-    private void changeAvatarProfileColor(String status) {
-        int color = status.equals("online") ?
-                ContextCompat.getColor(ChatActivity.this, R.color.green) :
-                ContextCompat.getColor(ChatActivity.this, R.color.gray);
-
-        ColorStateList colorStateList = ColorStateList.valueOf(color);
-        imageView.setBackgroundTintList(colorStateList);
-    }
-
     private void setOtherUserData() {
         otherUsername.setText(otherUser.getUsername());
-        FirebaseUtil.getProfilePictureByUserId(otherUser.getUserId()).getDownloadUrl()
-                .addOnCompleteListener(new OnCompleteListener<Uri>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Uri> task) {
-                        if (task.isSuccessful()) {
-                            Uri uri = task.getResult();
-                            AndroidUtil.setProfilePicture(ChatActivity.this, uri, imageView);
-                        }
+        FirebaseUtility.getProfilePictureByUserId(otherUser.getUserId()).getDownloadUrl()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Uri uri = task.getResult();
+                        AndroidUtility.setProfilePicture(ChatActivity.this, uri, otherUserProfileImageView);
                     }
                 });
     }
 
     private void setupChatRecyclerView() {
-        Query query = FirebaseUtil.getAllChatMessageOfChatRoomById(chatroomId)
+        Query query = FirebaseUtility.getAllChatMessageOfChatRoomById(chatroomId)
                 .orderBy("timestamp", Query.Direction.ASCENDING);
 
         FirestoreRecyclerOptions<ChatMessage> options = new FirestoreRecyclerOptions.Builder<ChatMessage>()
                 .setQuery(query, ChatMessage.class).build();
 
-        adapter = new ChatRoomRecyclerAdapter(options, getApplicationContext(), otherUser.getUserId());
-        LinearLayoutManager manager = new LinearLayoutManager(  ChatActivity.this);
-
+        adapter = new ChatRoomRecyclerAdapter(options, ChatActivity.this, otherUser.getUserId());
+        LinearLayoutManager manager = new LinearLayoutManager(ChatActivity.this);
         recyclerView.setLayoutManager(manager);
         recyclerView.setAdapter(adapter);
         adapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
@@ -255,7 +205,7 @@ public class ChatActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        if(adapter != null) {
+        if (adapter != null) {
             adapter.startListening();
         }
     }
@@ -270,44 +220,41 @@ public class ChatActivity extends AppCompatActivity {
 
     private void sendMessageToUser(String message) {
         chatRoom.setLastMessageTimestamp(Timestamp.now());
-        chatRoom.setLastMessageSenderId(FirebaseUtil.getCurrentUserId());
+        chatRoom.setLastMessageSenderId(FirebaseUtility.getCurrentUserId());
         chatRoom.setLastMessage(message);
-        FirebaseUtil.getChatRoomById(chatroomId).set(chatRoom);
+        FirebaseUtility.getChatRoomById(chatroomId).set(chatRoom);
 
         ChatMessage chatMessage = new ChatMessage(
-                message, FirebaseUtil.getCurrentUserId(), Timestamp.now(),
-                chatroomId, UniformContract.MESSAGE_TYPE_STRING, ""
+                message, FirebaseUtility.getCurrentUserId(), Timestamp.now(),
+                chatroomId, MESSAGE_TYPE_STRING, ""
         );
-        FirebaseUtil.getAllChatMessageOfChatRoomById(chatroomId).add(chatMessage)
-                .addOnCompleteListener(new OnCompleteListener<DocumentReference>() {
-                    @Override
-                    public void onComplete(@NonNull Task<DocumentReference> task) {
-                        if (task.isSuccessful()) {
-                            messageInput.setText("");
-                            sendNotification(message);
-                        }
+        FirebaseUtility.getAllChatMessageOfChatRoomById(chatroomId).add(chatMessage)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        messageInput.setText("");
+                        sendNotification(message);
                     }
                 });
     }
 
-    private void sendImageToUser(Uri uri) {
+    private void sendMediaFileToUser(Uri uri, String type) {
         // update chat room
-        String message = "Image";
+        String message = type;
         Timestamp timestampNow = Timestamp.now();
 
         chatRoom.setLastMessageTimestamp(timestampNow);
-        chatRoom.setLastMessageSenderId(FirebaseUtil.getCurrentUserId());
+        chatRoom.setLastMessageSenderId(FirebaseUtility.getCurrentUserId());
         chatRoom.setLastMessage(message);
-        FirebaseUtil.getChatRoomById(chatroomId).set(chatRoom);
+        FirebaseUtility.getChatRoomById(chatroomId).set(chatRoom);
 
-        // set message type to IMAGE
+        // set message type
         // generate unique media file key
         String mediaFieldId = String.format("%s_%s",
-                FirebaseUtil.getCurrentUserId(), FirebaseUtil.timestampToFullString(timestampNow)
+                FirebaseUtility.getCurrentUserId(), FirebaseUtility.timestampToFullString(timestampNow)
         );
         ChatMessage chatMessage = new ChatMessage(
-                message, FirebaseUtil.getCurrentUserId(), timestampNow,
-                chatroomId, UniformContract.MESSAGE_TYPE_IMAGE, mediaFieldId
+                message, FirebaseUtility.getCurrentUserId(), timestampNow,
+                chatroomId, type, mediaFieldId
         );
 
         // update image file to firebase
@@ -315,82 +262,59 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void updateMediaFileToFirebase(Uri uri, String chatroomId, String mediaFileId, ChatMessage chatMessage) {
-        FirebaseUtil.getMediaFileOfChatRoomById(chatroomId, mediaFileId).putFile(uri)
-                .addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
-                        if(task.isSuccessful()) {
-                            FirebaseUtil.getAllChatMessageOfChatRoomById(chatroomId).add(chatMessage)
-                                    .addOnCompleteListener(new OnCompleteListener<DocumentReference>() {
-                                        @Override
-                                        public void onComplete(@NonNull Task<DocumentReference> task) {
-                                            if (task.isSuccessful()) {
-                                                // send notification
-                                                sendNotification(chatMessage.getMessage());
+        FirebaseUtility.getMediaFileOfChatRoomById(chatroomId, mediaFileId).putFile(uri)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        FirebaseUtility.getAllChatMessageOfChatRoomById(chatroomId).add(chatMessage)
+                                .addOnCompleteListener(task1 -> {
+                                    if (task1.isSuccessful()) {
+                                        sendNotification(chatMessage.getMessage());
 
-                                            } else {
-                                                AndroidUtil.showToast(ChatActivity.this, "Can't add message");
-                                            }
-                                        }
-                                    });
-                        } else {
-                            AndroidUtil.showToast(ChatActivity.this, "Can't add image");
-                        }
+                                    } else {
+                                        AndroidUtility.showToast(ChatActivity.this, "Can't add message");
+                                    }
+                                });
+                    } else {
+                        AndroidUtility.showToast(ChatActivity.this, "Can't add MEDIA FILE");
                     }
                 });
     }
 
 
     private void getOrCreateChatroomModel() {
-        FirebaseUtil.getChatRoomById(chatroomId).get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                if (task.isSuccessful()) {
-                    chatRoom = task.getResult().toObject(ChatRoom.class);
-                    if (chatRoom == null) {
-                        //first time chat
-                        chatRoom = new ChatRoom(
-                                chatroomId,
-                                Arrays.asList(FirebaseUtil.getCurrentUserId(), otherUser.getUserId()),
-                                Timestamp.now(),
-                                ""
-                        );
-                        FirebaseUtil.getChatRoomById(chatroomId).set(chatRoom);
-                    }
-                }
+        FirebaseUtility.getChatRoomById(chatroomId).get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                chatRoom = task.getResult().toObject(ChatRoom.class);
             }
         });
     }
 
     private void sendNotification(String message) {
 
-        FirebaseUtil.getCurrentUser().get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                if (task.isSuccessful()) {
-                    User currentUser = task.getResult().toObject(User.class);
-                    try {
-                        // notification
-                        JSONObject notificationObj = new JSONObject();
-                        notificationObj.put("title", currentUser.getUsername());
-                        notificationObj.put("body", message);
+        FirebaseUtility.getCurrentUser().get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                User currentUser = task.getResult().toObject(User.class);
+                try {
+                    // notification
+                    JSONObject notificationObj = new JSONObject();
+                    notificationObj.put("title", currentUser.getUsername());
+                    notificationObj.put("body", message);
 
-                        // data
-                        JSONObject dataObj = new JSONObject();
-                        dataObj.put("userId", currentUser.getUserId());
+                    // data
+                    JSONObject dataObj = new JSONObject();
+                    dataObj.put("userId", currentUser.getUserId());
 
-                        JSONObject jsonObject = new JSONObject();
-                        jsonObject.put("data", dataObj);
-                        jsonObject.put("notification", notificationObj);
-                        jsonObject.put("to", otherUser.getFcmToken());
+                    JSONObject jsonObject = new JSONObject();
+                    jsonObject.put("data", dataObj);
+                    jsonObject.put("notification", notificationObj);
+                    jsonObject.put("to", otherUser.getFcmToken());
 
-                        callApi(jsonObject);
+                    callApi(jsonObject);
 
-                    } catch (Exception e) {
-
-                    }
+                } catch (Exception ignored) {
 
                 }
+
             }
         });
 
