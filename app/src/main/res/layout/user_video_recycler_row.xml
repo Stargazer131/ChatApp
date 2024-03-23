@@ -1,0 +1,40 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tool="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="8dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/left_chat_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true">
+
+        <ImageView
+            android:id="@+id/left_profile_picture"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:background="@drawable/circular_bg"
+            android:backgroundTint="@color/off_white"
+            android:src="@drawable/ic_person"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <com.google.android.exoplayer2.ui.PlayerView
+            android:id="@+id/left_chat_videoview"
+            android:layout_width="300dp"
+            android:layout_height="300dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="10dp"
+            android:adjustViewBounds="true"
+            android:maxWidth="300dp"
+            android:maxHeight="300dp"
+            android:padding="8dp"
+            app:layout_constrainedWidth="true"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/left_profile_picture"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</RelativeLayout>

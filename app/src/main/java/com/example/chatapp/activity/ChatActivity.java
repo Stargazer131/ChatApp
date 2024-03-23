@@ -325,7 +325,9 @@ public class ChatActivity extends AppCompatActivity {
         OkHttpClient client = new OkHttpClient();
         String url = "https://fcm.googleapis.com/fcm/send";
         RequestBody body = RequestBody.create(jsonObject.toString(), JSON);
-        String apiKey = "AAAAJiCJMaM:APA91bGanpXPGafcmHJRTAfaWBcMlGqxPTSdp9OvYiI80bUz_O_dI_VDXgWU2gePx-czLUafmf_JgxQKg9gBUqjs3uhxb8PW9lTlKRC4zgibtZWdt-DTcsv8bYqhCQrRC5egFG96OaRq";
+        String apiKey = "AAAAJiCJMaM:APA91bGanpXPGafcmHJRTAfaWBcMlGqx" +
+                "PTSdp9OvYiI80bUz_O_dI_VDXgWU2gePx-czLUafmf_JgxQKg9gBUqjs3uhxb8PW9l" +
+                "TlKRC4zgibtZWdt-DTcsv8bYqhCQrRC5egFG96OaRq";
         Request request = new Request.Builder()
                 .url(url)
                 .post(body)
@@ -339,7 +341,7 @@ public class ChatActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+            public void onResponse(@NonNull Call call, @NonNull Response response) {
 
             }
         });

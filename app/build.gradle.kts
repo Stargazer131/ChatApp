@@ -53,6 +53,8 @@ dependencies {
 
     implementation("androidx.lifecycle:lifecycle-process:2.7.0")
     implementation("androidx.lifecycle:lifecycle-common:2.7.0")
+    implementation("com.google.android.exoplayer:exoplayer-core:2.13.3")
+    implementation("com.google.android.exoplayer:exoplayer-ui:2.13.3")
     //////////////
 
     testImplementation("junit:junit:4.13.2")
