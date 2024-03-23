@@ -33,6 +33,7 @@
         android:layout_margin="10dp">
 
         <AutoCompleteTextView
+            android:completionThreshold="1"
             android:id="@+id/edit_text_search_username"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

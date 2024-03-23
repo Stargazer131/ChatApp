@@ -26,19 +26,19 @@ import com.example.chatapp.utility.UrlString;
 import com.firebase.ui.firestore.FirestoreRecyclerAdapter;
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
 import com.google.android.exoplayer2.DefaultRenderersFactory;
+import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.google.android.exoplayer2.ui.PlayerView;
-import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
+@SuppressWarnings("deprecation")
 public class ChatRoomRecyclerAdapter extends FirestoreRecyclerAdapter<ChatMessage, RecyclerView.ViewHolder> {
     private static final int TYPE_USER_MESSAGE = 0;
     private static final int TYPE_USER_IMAGE = 2;
@@ -50,7 +50,8 @@ public class ChatRoomRecyclerAdapter extends FirestoreRecyclerAdapter<ChatMessag
     private Context context;
     private String currentUserId;
     private String otherUserId;
-    private HashMap<String, SimpleExoPlayer> playerMap = new HashMap<>();
+
+
     public ChatRoomRecyclerAdapter(@NonNull FirestoreRecyclerOptions<ChatMessage> options, Context context, String otherUserId) {
         super(options);
         this.context = context;
@@ -151,9 +152,12 @@ public class ChatRoomRecyclerAdapter extends FirestoreRecyclerAdapter<ChatMessag
     public void onViewRecycled(@NonNull RecyclerView.ViewHolder holder) {
         super.onViewRecycled(holder);
         if (holder instanceof UserVideoViewHolder) {
-            releasePlayer(((UserVideoViewHolder) holder).leftChatVideoView);
+            UserVideoViewHolder userVideoViewHolder = (UserVideoViewHolder) holder;
+            releasePlayer(userVideoViewHolder.leftChatVideoView);
+
         } else if (holder instanceof OtherUserVideoViewHolder) {
-            releasePlayer(((OtherUserVideoViewHolder) holder).rightChatVideoView);
+            OtherUserVideoViewHolder otherUserImageViewHolder = (OtherUserVideoViewHolder) holder;
+            releasePlayer(otherUserImageViewHolder.rightChatVideoView);
         }
     }
 
@@ -161,26 +165,25 @@ public class ChatRoomRecyclerAdapter extends FirestoreRecyclerAdapter<ChatMessag
         FirebaseUtility.getMediaFileOfChatRoomById(model.getChatRoomId(), model.getMediaFileId()).getDownloadUrl()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(context, "user-agent");
                         Uri videoUri = task.getResult();
-                        MediaSource mediaSource = new ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(videoUri);
-                        initializePlayer(videoView, mediaSource, model.getMediaFileId());
+                        DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(context, "user-agent");
+                        MediaItem mediaItem = MediaItem.fromUri(videoUri);
+                        final MediaSource mediaSource = new ProgressiveMediaSource.Factory(dataSourceFactory)
+                                .createMediaSource(mediaItem);
+                        initializePlayer(videoView, mediaSource);
 
                     } else {
-                        Log.d("ERROR", task.getException().toString());
+                        Log.d("SET_VIDEO_RESOURCE_ERROR", task.getException().toString());
                     }
                 });
     }
 
-    private void initializePlayer(PlayerView videoView, MediaSource mediaSource, String id) {
-        SimpleExoPlayer player = playerMap.get(id);
-        if (player == null) {
-            TrackSelector trackSelector = new DefaultTrackSelector(context);
-            DefaultRenderersFactory renderersFactory = new DefaultRenderersFactory(context);
-            player = ExoPlayerFactory.newSimpleInstance(context, renderersFactory, trackSelector);
-            playerMap.put(id, player);
-            videoView.setPlayer(player);
-        }
+
+    private void initializePlayer(PlayerView videoView, MediaSource mediaSource) {
+        TrackSelector trackSelector = new DefaultTrackSelector(context);
+        DefaultRenderersFactory renderersFactory = new DefaultRenderersFactory(context);
+        SimpleExoPlayer player = new SimpleExoPlayer.Builder(context, renderersFactory).setTrackSelector(trackSelector).build();
+        videoView.setPlayer(player);
         player.prepare(mediaSource);
     }
 

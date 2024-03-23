@@ -94,10 +94,17 @@ public class FirebaseUtility {
                 .child(mediaFileId);
     }
 
-    public static String timestampToHourMinuteString(Timestamp timestamp) {
+    public static String timestampToCustomString(Timestamp timestamp) {
+        Date now = new Date();
         Date date = timestamp.toDate();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
-        return dateFormat.format(date);
+        if(now.getDate() == date.getDate()) {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+            return "Today" + " " + dateFormat.format(date);
+
+        } else {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
+            return dateFormat.format(date);
+        }
     }
 
     public static String timestampToFullString(Timestamp timestamp) {

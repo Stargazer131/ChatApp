@@ -38,25 +38,24 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
 
     //////////////
+    implementation(platform(("com.google.firebase:firebase-bom:32.7.4")))
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-storage")
+    implementation("com.google.firebase:firebase-messaging")
+    implementation("com.firebaseui:firebase-ui-firestore:8.0.2")
+
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("com.hbb20:ccp:2.7.3")
     implementation("com.github.dhaval2404:imagepicker:2.1")
     implementation("com.github.bumptech.glide:glide:4.16.0")
     implementation("io.ak1.pix:piximagepicker:1.6.3")
-
-    implementation(platform(("com.google.firebase:firebase-bom:32.7.4")))
-    implementation("com.google.firebase:firebase-auth:22.3.1")
-    implementation("com.google.firebase:firebase-firestore:24.10.3")
-    implementation("com.firebaseui:firebase-ui-firestore:8.0.2")
-    implementation("com.google.firebase:firebase-storage:20.3.0")
-    implementation("com.google.firebase:firebase-messaging:23.4.1")
-
     implementation("androidx.lifecycle:lifecycle-process:2.7.0")
     implementation("androidx.lifecycle:lifecycle-common:2.7.0")
-    implementation("com.google.android.exoplayer:exoplayer-core:2.13.3")
-    implementation("com.google.android.exoplayer:exoplayer-ui:2.13.3")
-    //////////////
+    implementation("com.google.android.exoplayer:exoplayer-core:2.19.1")
+    implementation("com.google.android.exoplayer:exoplayer-ui:2.19.1")
+//    implementation("com.google.auth:google-auth-library-oauth2-http:1.23.0")
 
+    //////////////
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")

@@ -1,9 +1,12 @@
 package com.example.chatapp.activity;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -31,10 +34,12 @@ import com.firebase.ui.firestore.FirestoreRecyclerOptions;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.Query;
 
+
 import org.json.JSONObject;
 
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Arrays;
+
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -65,6 +70,7 @@ public class ChatActivity extends AppCompatActivity {
     public static final String MESSAGE_TYPE_IMAGE = "Image";
     public static final String MESSAGE_TYPE_VIDEO = "Video";
     public static final String MESSAGE_TYPE_AUDIO = "Audio";
+    public static final long MEDIA_SIZE_THRESHOLD = 1024 * 1024 * 15;
 
 
     @Override
@@ -113,6 +119,11 @@ public class ChatActivity extends AppCompatActivity {
     private void setUpVideoPicker() {
         videoPickerLauncher = registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), o -> {
             if (o != null) {
+                long size = getMediaFileSize(ChatActivity.this, o);
+                if(size > MEDIA_SIZE_THRESHOLD) {
+                    AndroidUtility.showToast(ChatActivity.this, "Media File can't be over 25MB");
+                    return;
+                }
                 sendMediaFileToUser(o, MESSAGE_TYPE_VIDEO);
             }
         });
@@ -121,6 +132,11 @@ public class ChatActivity extends AppCompatActivity {
     private void setUpImagePicker() {
         imagePickerLauncher = registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), o -> {
             if (o != null) {
+                long size = getMediaFileSize(ChatActivity.this, o);
+                if(size > MEDIA_SIZE_THRESHOLD) {
+                    AndroidUtility.showToast(ChatActivity.this, "Media File can't be over 25MB");
+                    return;
+                }
                 sendMediaFileToUser(o, MESSAGE_TYPE_IMAGE);
             }
         });
@@ -290,7 +306,6 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void sendNotification(String message) {
-
         FirebaseUtility.getCurrentUser().get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 User currentUser = task.getResult().toObject(User.class);
@@ -314,7 +329,6 @@ public class ChatActivity extends AppCompatActivity {
                 } catch (Exception ignored) {
 
                 }
-
             }
         });
 
@@ -345,6 +359,22 @@ public class ChatActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+    private static long getMediaFileSize(Context context, Uri mediaUri) {
+        long fileSize = 0;
+        ContentResolver contentResolver = context.getContentResolver();
+        try (Cursor cursor = contentResolver.query(mediaUri, null, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                int sizeIndex = cursor.getColumnIndex(MediaStore.MediaColumns.SIZE);
+                if (sizeIndex != -1) {
+                    fileSize = cursor.getLong(sizeIndex);
+                }
+            }
+        } catch (Exception e) {
+            Log.e("MediaSizeHelper", "Error retrieving file size", e);
+        }
+        return fileSize;
     }
 
 }

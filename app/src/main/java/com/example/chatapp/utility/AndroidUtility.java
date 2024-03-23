@@ -65,6 +65,7 @@ public class AndroidUtility {
         try {
             Glide.with(context)
                     .load(imageUri)
+                    .placeholder(R.drawable.placeholder_image)
                     .into(imageView);
 
         } catch (Exception ignored) {

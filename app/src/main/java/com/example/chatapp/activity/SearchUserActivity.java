@@ -1,6 +1,7 @@
 package com.example.chatapp.activity;
 
 import android.os.Bundle;
+import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageButton;
 
@@ -14,6 +15,10 @@ import com.example.chatapp.model.User;
 import com.example.chatapp.utility.FirebaseUtility;
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+
+import java.util.ArrayList;
+import java.util.HashSet;
 
 public class SearchUserActivity extends AppCompatActivity {
 
@@ -31,11 +36,33 @@ public class SearchUserActivity extends AppCompatActivity {
         searchButton = findViewById(R.id.btn_search_user);
         recyclerView = findViewById(R.id.search_user_recycler_view);
         searchInput.requestFocus();
+        setUpAutoCompleteText();
 
         searchButton.setOnClickListener(v -> {
             String searchTerm = searchInput.getText().toString();
             setupSearchRecyclerView(searchTerm);
         });
+    }
+
+    private void setUpAutoCompleteText() {
+        HashSet<String> usernameData = new HashSet<>();
+
+        FirebaseUtility.getAllUser().get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            String username = (String) document.get("username");
+                            usernameData.add(username);
+                        }
+
+                        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                                SearchUserActivity.this,
+                                android.R.layout.simple_dropdown_item_1line,
+                                new ArrayList<>(usernameData)
+                        );
+                        searchInput.setAdapter(adapter);
+                    }
+                });
     }
 
     private void setupSearchRecyclerView(String searchTerm) {

@@ -55,7 +55,7 @@ public class RecentChatRecyclerAdapter
                         }
 
                         holder.usernameText.setText(otherUser.getUsername());
-                        holder.lastMessageTime.setText(FirebaseUtility.timestampToHourMinuteString(model.getLastMessageTimestamp()));
+                        holder.lastMessageTime.setText(FirebaseUtility.timestampToCustomString(model.getLastMessageTimestamp()));
                         holder.itemView.setOnClickListener(v -> openChatActivity(otherUser, model.getChatroomId()));
                     }
                 });

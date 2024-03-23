@@ -61,7 +61,7 @@
         android:orientation="horizontal"
         android:id="@+id/bottom_layout"
         android:layout_width="match_parent"
-        android:layout_height="80dp"
+        android:layout_height="100dp"
         android:layout_alignParentBottom="true"
         android:padding="8dp">
 
@@ -77,12 +77,14 @@
 
         <EditText
             android:id="@+id/chat_message_input"
+            android:layout_gravity="center_vertical"
             android:layout_width="0dp"
             android:layout_weight="1"
-            android:layout_height="wrap_content"
             android:layout_margin="10dp"
             android:background="@drawable/edit_text_rounded_corner"
             android:elevation="4dp"
+            android:inputType="textImeMultiLine|textMultiLine"
+            android:layout_height="wrap_content"
             android:hint="Write message here"
             android:padding="10dp" />
 
