@@ -7,6 +7,10 @@ android {
     namespace = "com.example.chatapp"
     compileSdk = 34
 
+//    packagingOptions {
+//        resources.excludes.add("META-INF/*")
+//    }
+
     defaultConfig {
         applicationId = "com.example.chatapp"
         minSdk = 24
@@ -53,7 +57,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-common:2.7.0")
     implementation("com.google.android.exoplayer:exoplayer-core:2.19.1")
     implementation("com.google.android.exoplayer:exoplayer-ui:2.19.1")
-//    implementation("com.google.auth:google-auth-library-oauth2-http:1.23.0")
+//    implementation("com.google.auth:google-auth-library-oauth2-http:1.19.0")
 
     //////////////
     testImplementation("junit:junit:4.13.2")

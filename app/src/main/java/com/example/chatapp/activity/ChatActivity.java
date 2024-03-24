@@ -34,12 +34,10 @@ import com.firebase.ui.firestore.FirestoreRecyclerOptions;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.Query;
 
-
 import org.json.JSONObject;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -248,7 +246,8 @@ public class ChatActivity extends AppCompatActivity {
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         messageInput.setText("");
-                        sendNotification(message);
+                        boolean isNotificationSuccessful = sendNotification(message);
+                        Log.d("SEND_Notification", String.valueOf(isNotificationSuccessful));
                     }
                 });
     }
@@ -284,7 +283,8 @@ public class ChatActivity extends AppCompatActivity {
                         FirebaseUtility.getAllChatMessageOfChatRoomById(chatroomId).add(chatMessage)
                                 .addOnCompleteListener(task1 -> {
                                     if (task1.isSuccessful()) {
-                                        sendNotification(chatMessage.getMessage());
+                                        boolean isNotificationSuccessful = sendNotification(chatMessage.getMessage());
+                                        Log.d("SEND_Notification", String.valueOf(isNotificationSuccessful));
 
                                     } else {
                                         AndroidUtility.showToast(ChatActivity.this, "Can't add message");
@@ -305,7 +305,8 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
-    private void sendNotification(String message) {
+    private boolean sendNotification(String message) {
+        AtomicBoolean successful = new AtomicBoolean(false);
         FirebaseUtility.getCurrentUser().get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 User currentUser = task.getResult().toObject(User.class);
@@ -324,17 +325,20 @@ public class ChatActivity extends AppCompatActivity {
                     jsonObject.put("notification", notificationObj);
                     jsonObject.put("to", otherUser.getFcmToken());
 
-                    callApi(jsonObject);
+                    successful.set(callApi(jsonObject));
 
                 } catch (Exception ignored) {
-
+                    successful.set(false);
                 }
             }
         });
 
+        return successful.get();
     }
 
-    private void callApi(JSONObject jsonObject) {
+    private boolean callApi(JSONObject jsonObject) {
+        final boolean[] successful = {false};
+
         MediaType JSON = MediaType.get("application/json; charset=utf-8");
         OkHttpClient client = new OkHttpClient();
         String url = "https://fcm.googleapis.com/fcm/send";
@@ -351,14 +355,15 @@ public class ChatActivity extends AppCompatActivity {
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
-
+                successful[0] = false;
             }
 
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) {
-
+                successful[0] = true;
             }
         });
+        return successful[0];
     }
 
     private static long getMediaFileSize(Context context, Uri mediaUri) {
