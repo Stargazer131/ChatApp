@@ -339,10 +339,10 @@ public class ChatActivity extends AppCompatActivity {
     private boolean callApi(JSONObject jsonObject) {
         final boolean[] successful = {false};
 
-        MediaType JSON = MediaType.get("application/json; charset=utf-8");
+        MediaType mediaType = MediaType.get("application/json; charset=utf-8");
         OkHttpClient client = new OkHttpClient();
         String url = "https://fcm.googleapis.com/fcm/send";
-        RequestBody body = RequestBody.create(jsonObject.toString(), JSON);
+        RequestBody body = RequestBody.create(jsonObject.toString(), mediaType);
         String apiKey = "AAAAJiCJMaM:APA91bGanpXPGafcmHJRTAfaWBcMlGqx" +
                 "PTSdp9OvYiI80bUz_O_dI_VDXgWU2gePx-czLUafmf_JgxQKg9gBUqjs3uhxb8PW9l" +
                 "TlKRC4zgibtZWdt-DTcsv8bYqhCQrRC5egFG96OaRq";
