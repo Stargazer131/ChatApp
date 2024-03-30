@@ -4,10 +4,12 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.chatapp.R;
+import com.example.chatapp.fragment.ResetPasswordFragment;
 import com.example.chatapp.utility.AndroidUtility;
 import com.example.chatapp.utility.FirebaseUtility;
 import com.google.android.material.button.MaterialButton;
@@ -15,8 +17,9 @@ import com.google.firebase.auth.FirebaseAuth;
 
 public class EmailLoginActivity extends AppCompatActivity {
     EditText editTextEmail, editTextPassword;
-    MaterialButton btnLogin;
+    Button btnLogin;
     Button btnRegister;
+    TextView forgetPasswordTxt;
     FirebaseAuth firebaseAuth;
 
     @Override
@@ -28,6 +31,7 @@ public class EmailLoginActivity extends AppCompatActivity {
         editTextPassword = findViewById(R.id.edit_text_login_password);
         btnLogin = findViewById(R.id.btn_login);
         btnRegister = findViewById(R.id.btn_email_register);
+        forgetPasswordTxt = findViewById(R.id.forget_password_text);
         firebaseAuth = FirebaseAuth.getInstance();
 
         /// data from register
@@ -45,6 +49,10 @@ public class EmailLoginActivity extends AppCompatActivity {
             String email1 = editTextEmail.getText().toString().trim();
             String password1 = editTextPassword.getText().toString().trim();
             login(email1, password1);
+        });
+
+        forgetPasswordTxt.setOnClickListener(v -> {
+            showResetPasswordDialog();
         });
 
         btnRegister.setOnClickListener(v -> register());
@@ -87,5 +95,10 @@ public class EmailLoginActivity extends AppCompatActivity {
     private void register() {
         Intent intent = new Intent(EmailLoginActivity.this, EmailRegisterActivity.class);
         startActivity(intent);
+    }
+
+    private void showResetPasswordDialog() {
+        ResetPasswordFragment resetPasswordFragment = new ResetPasswordFragment();
+        resetPasswordFragment.show(getSupportFragmentManager(), "Reset Password");
     }
 }

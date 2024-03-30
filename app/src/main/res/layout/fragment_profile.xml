@@ -59,6 +59,14 @@
         android:background="@drawable/btn_rounded_corner"
         android:text="Update profile" />
 
+    <Button
+        android:layout_marginTop="20dp"
+        android:id="@+id/btn_password_update"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/btn_rounded_corner"
+        android:text="Change Password" />
+
 
     <Button
         android:layout_marginTop="20dp"

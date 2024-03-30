@@ -93,7 +93,7 @@ public class ChatActivity extends AppCompatActivity {
         setUpVideoPicker();
         setOtherUserData();
         setUpUserStatusListener();
-        getOrCreateChatroomModel();
+        getChatRoom();
         setupChatRecyclerView();
 
         btnBackHome.setOnClickListener(v -> startActivity(AndroidUtility.getBackHomeIntent(ChatActivity.this)));
@@ -297,7 +297,7 @@ public class ChatActivity extends AppCompatActivity {
     }
 
 
-    private void getOrCreateChatroomModel() {
+    private void getChatRoom() {
         FirebaseUtility.getChatRoomById(chatroomId).get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 chatRoom = task.getResult().toObject(ChatRoom.class);

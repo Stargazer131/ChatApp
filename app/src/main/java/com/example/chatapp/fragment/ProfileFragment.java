@@ -30,6 +30,7 @@ public class ProfileFragment extends Fragment {
     private EditText usernameInput, emailInput;
     private Button updateProfileBtn;
     private Button logoutBtn;
+    private Button changePasswordBtn;
 
     private User currentUser;
     private ActivityResultLauncher<Intent> imagePickLauncher;
@@ -62,6 +63,7 @@ public class ProfileFragment extends Fragment {
         emailInput = view.findViewById(R.id.edit_text_profile_email);
         updateProfileBtn = view.findViewById(R.id.btn_profile_update);
         logoutBtn = view.findViewById(R.id.btn_profile_logout);
+        changePasswordBtn = view.findViewById(R.id.btn_password_update);
         getUserData();
 
         updateProfileBtn.setOnClickListener(v -> updateBtnClick());
@@ -91,7 +93,14 @@ public class ProfileFragment extends Fragment {
                     return null;
                 }));
 
+        changePasswordBtn.setOnClickListener(v -> showChangePasswordDialog(currentUser.getEmail()));
+
         return view;
+    }
+
+    private void showChangePasswordDialog(String email) {
+        ChangePasswordFragment changePasswordFragment = new ChangePasswordFragment(email);
+        changePasswordFragment.show(getActivity().getSupportFragmentManager(), "Change Password");
     }
 
     private void updateBtnClick() {
