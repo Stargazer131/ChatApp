@@ -5,7 +5,7 @@ import com.google.firebase.Timestamp;
 import java.io.Serializable;
 import java.util.List;
 
-public class ChatRoom implements Serializable {
+public class ChatRoom {
     String chatroomId;
     List<String> userIds;
     Timestamp lastMessageTimestamp;

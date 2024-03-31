@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.chatapp.R;
 import com.example.chatapp.model.User;
 import com.example.chatapp.utility.AndroidUtility;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -52,6 +53,8 @@ public class EmailRegisterActivity extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         String uid = task.getResult().getUser().getUid();
                         User user = new User(username, uid, email);
+                        user.setStatus("offline");
+                        user.setLastActive(Timestamp.now());
                         addUserToFirebase(uid, user, password);
 
                     } else {

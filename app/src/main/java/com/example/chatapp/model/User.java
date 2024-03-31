@@ -1,14 +1,15 @@
 package com.example.chatapp.model;
 
-import java.io.Serializable;
+import com.google.firebase.Timestamp;
 
-public class User implements Serializable {
+public class User {
     private String username;
     private String usernameLowercase;
     private String userId;
     private String email;
     private String status;
     private String fcmToken;
+    private Timestamp lastActive;
 
     public User() {
     }
@@ -27,6 +28,14 @@ public class User implements Serializable {
     public void setUsername(String username) {
         this.username = username;
         this.usernameLowercase = username.toLowerCase();
+    }
+
+    public Timestamp getLastActive() {
+        return lastActive;
+    }
+
+    public void setLastActive(Timestamp lastActive) {
+        this.lastActive = lastActive;
     }
 
     public String getUserId() {

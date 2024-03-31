@@ -41,7 +41,7 @@ public class UserProfileActivity extends AppCompatActivity {
         btnFriend = findViewById(R.id.btn_user_profile_friend);
         btnBackHome = findViewById(R.id.btn_user_profile_back_home);
         txtUsernameUserProfile = findViewById(R.id.text_username_user_profile);
-        userId = getIntent().getExtras().getString("userId");
+        userId = getIntent().getStringExtra("userId");
 
         btnBackHome.setOnClickListener(v -> startActivity(AndroidUtility.getBackHomeIntent(UserProfileActivity.this)));
 
@@ -83,7 +83,7 @@ public class UserProfileActivity extends AppCompatActivity {
 
     private void openChatActivity(String chatRoomId) {
         Intent intent = new Intent(UserProfileActivity.this, ChatActivity.class);
-        intent.putExtra("otherUser", user);
+        intent.putExtra("otherUserId", userId);
         intent.putExtra("chatRoomId", chatRoomId);
         startActivity(intent);
     }

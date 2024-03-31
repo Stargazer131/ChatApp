@@ -83,7 +83,7 @@ public class RecentChatRecyclerAdapter
     private void openChatActivity(User otherUser, String chatRoomId) {
         //navigate to chat activity
         Intent intent = new Intent(context, ChatActivity.class);
-        intent.putExtra("otherUser", otherUser);
+        intent.putExtra("otherUserId", otherUser.getUserId());
         intent.putExtra("chatRoomId", chatRoomId);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(intent);

@@ -12,7 +12,6 @@ import com.example.chatapp.R;
 import com.example.chatapp.fragment.ResetPasswordFragment;
 import com.example.chatapp.utility.AndroidUtility;
 import com.example.chatapp.utility.FirebaseUtility;
-import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class EmailLoginActivity extends AppCompatActivity {
@@ -71,11 +70,12 @@ public class EmailLoginActivity extends AppCompatActivity {
 
         btnLogin.setEnabled(false);
         btnRegister.setEnabled(false);
+        forgetPasswordTxt.setEnabled(false);
         firebaseAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(EmailLoginActivity.this, task -> {
                     if (task.isSuccessful()) {
                         String userId = task.getResult().getUser().getUid();
-                        FirebaseUtility.updateUserStatus(userId, "online");
+                        FirebaseUtility.updateCurrentUserStatus(userId, "online");
 
                         Intent intent = new Intent(EmailLoginActivity.this, MainActivity.class);
                         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -86,9 +86,10 @@ public class EmailLoginActivity extends AppCompatActivity {
                         String errorMessage = exception.getMessage();
                         AndroidUtility.showToast(EmailLoginActivity.this, "Login failed: " + errorMessage);
 
+                        btnLogin.setEnabled(true);
+                        btnRegister.setEnabled(true);
+                        forgetPasswordTxt.setEnabled(true);
                     }
-                    btnLogin.setEnabled(true);
-                    btnRegister.setEnabled(true);
                 });
     }
 

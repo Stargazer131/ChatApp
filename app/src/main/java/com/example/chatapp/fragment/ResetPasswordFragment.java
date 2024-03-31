@@ -8,6 +8,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 
 import android.util.Log;
+import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -58,6 +59,12 @@ public class ResetPasswordFragment extends DialogFragment {
                 String email = emailInput.getText().toString().trim();
                 if (email.isEmpty()) {
                     emailInput.setError("Blank email");
+                    sendBtn.setEnabled(true);
+                    return;
+                }
+
+                if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                    emailInput.setError("Invalid Email");
                     sendBtn.setEnabled(true);
                     return;
                 }

@@ -13,7 +13,8 @@ public class AppLifecycleListener implements DefaultLifecycleObserver {
     public void onStart(@NonNull LifecycleOwner owner) {
         Log.i(TAG, "Moved to foreground");
         if(FirebaseUtility.isLoggedIn()) {
-            FirebaseUtility.updateUserStatus("online");
+            // online
+            FirebaseUtility.updateCurrentUserStatus("online");
         }
     }
 
@@ -21,7 +22,8 @@ public class AppLifecycleListener implements DefaultLifecycleObserver {
     public void onStop(@NonNull LifecycleOwner owner) {
         Log.i(TAG, "Moved to background");
         if(FirebaseUtility.isLoggedIn()) {
-            FirebaseUtility.updateUserStatus("offline");
+            // offline
+            FirebaseUtility.updateCurrentUserStatusAndLastActive();
         }
     }
 }

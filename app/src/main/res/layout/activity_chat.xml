@@ -27,16 +27,29 @@
             android:src="@drawable/ic_person" />
 
         <TextView
+            android:layout_marginTop="8dp"
             android:id="@+id/other_username"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
             android:layout_marginStart="10dp"
             android:layout_toEndOf="@id/profile_pic_layout"
             android:text="Username"
             android:textColor="@color/white"
             android:textSize="22sp"
             android:textStyle="bold" />
+
+        <TextView
+            android:textSize="16sp"
+            android:layout_marginTop="5dp"
+            android:layout_marginStart="10dp"
+            android:layout_toEndOf="@id/profile_pic_layout"
+            android:layout_below="@id/other_username"
+            android:text="Online"
+            android:textStyle="bold"
+            android:id="@+id/other_user_status_txt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
 
         <ImageButton
             android:layout_width="35dp"

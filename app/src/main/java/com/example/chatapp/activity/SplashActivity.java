@@ -52,7 +52,7 @@ public class SplashActivity extends AppCompatActivity {
 
                         String chatRoomId = FirebaseUtility.getChatRoomId(userId, FirebaseUtility.getCurrentUserId());
                         Intent intent = new Intent(SplashActivity.this, ChatActivity.class);
-                        intent.putExtra("otherUser", model);
+                        intent.putExtra("otherUserId", userId);
                         intent.putExtra("chatRoomId", chatRoomId);
                         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         startActivity(intent);

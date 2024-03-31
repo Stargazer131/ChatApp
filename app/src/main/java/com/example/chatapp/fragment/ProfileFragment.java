@@ -70,9 +70,10 @@ public class ProfileFragment extends Fragment {
 
         logoutBtn.setOnClickListener(v -> {
             updateProfileBtn.setEnabled(false);
+            changePasswordBtn.setEnabled(false);
             FirebaseMessaging.getInstance().deleteToken().addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
-                    FirebaseUtility.updateUserStatus(currentUser.getUserId(), "offline");
+                    FirebaseUtility.updateUserStatusAndLastActive(currentUser.getUserId());
                     FirebaseUtility.logout();
 
                     Intent intent = new Intent(getContext(), SplashActivity.class);
@@ -112,6 +113,7 @@ public class ProfileFragment extends Fragment {
 
         currentUser.setUsername(newUsername);
         updateProfileBtn.setEnabled(false);
+        changePasswordBtn.setEnabled(false);
         logoutBtn.setEnabled(false);
         if (selectedImageUri != null) {
             updateUserDataAndProfileImageToFirebase();
@@ -137,6 +139,7 @@ public class ProfileFragment extends Fragment {
                     try {
                         updateProfileBtn.setEnabled(true);
                         logoutBtn.setEnabled(true);
+                        changePasswordBtn.setEnabled(true);
                     } catch (Exception ignored) {
 
                     }

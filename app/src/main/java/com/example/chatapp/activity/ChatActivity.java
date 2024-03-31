@@ -4,6 +4,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -31,7 +32,10 @@ import com.example.chatapp.model.User;
 import com.example.chatapp.utility.AndroidUtility;
 import com.example.chatapp.utility.FirebaseUtility;
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.Query;
 
 import org.json.JSONObject;
@@ -50,6 +54,7 @@ import okhttp3.Response;
 public class ChatActivity extends AppCompatActivity {
 
     private User otherUser;
+    private String otherUserId;
     private ChatRoom chatRoom;
     private String chatroomId;
     private ChatRoomRecyclerAdapter adapter;
@@ -58,6 +63,7 @@ public class ChatActivity extends AppCompatActivity {
     private ImageButton sendMessageBtn, btnAddOtherFile;
     private ImageButton btnBackHome;
     private TextView otherUsername;
+    private TextView otherUserStatusTxt;
     private RecyclerView recyclerView;
     private ImageView otherUserProfileImageView;
     private PopupMenu popupMenu;
@@ -68,7 +74,8 @@ public class ChatActivity extends AppCompatActivity {
     public static final String MESSAGE_TYPE_IMAGE = "Image";
     public static final String MESSAGE_TYPE_VIDEO = "Video";
     public static final String MESSAGE_TYPE_AUDIO = "Audio";
-    public static final long MEDIA_SIZE_THRESHOLD = 1024 * 1024 * 15;
+    public static final long MB_THRESHOLD = 25;
+    public static final long MEDIA_SIZE_THRESHOLD = 1024 * 1024 * MB_THRESHOLD;
 
 
     @Override
@@ -77,7 +84,7 @@ public class ChatActivity extends AppCompatActivity {
         setContentView(R.layout.activity_chat);
 
         //get UserModel
-        otherUser = (User) getIntent().getSerializableExtra("otherUser");
+        otherUserId = getIntent().getStringExtra("otherUserId");
         chatroomId = getIntent().getStringExtra("chatRoomId");
 
         messageInput = findViewById(R.id.chat_message_input);
@@ -87,8 +94,8 @@ public class ChatActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.chat_recycler_view);
         otherUserProfileImageView = findViewById(R.id.profile_pic_layout);
         btnAddOtherFile = findViewById(R.id.btn_send_other_file);
+        otherUserStatusTxt = findViewById(R.id.other_user_status_txt);
 
-        AndroidUtility.changeAvatarProfileColor(otherUser.getStatus(), otherUserProfileImageView, ChatActivity.this);
         setUpImagePicker();
         setUpVideoPicker();
         setOtherUserData();
@@ -118,7 +125,7 @@ public class ChatActivity extends AppCompatActivity {
         videoPickerLauncher = registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), o -> {
             if (o != null) {
                 long size = getMediaFileSize(ChatActivity.this, o);
-                if(size > MEDIA_SIZE_THRESHOLD) {
+                if (size > MEDIA_SIZE_THRESHOLD) {
                     AndroidUtility.showToast(ChatActivity.this, "Media File can't be over 25MB");
                     return;
                 }
@@ -131,7 +138,7 @@ public class ChatActivity extends AppCompatActivity {
         imagePickerLauncher = registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), o -> {
             if (o != null) {
                 long size = getMediaFileSize(ChatActivity.this, o);
-                if(size > MEDIA_SIZE_THRESHOLD) {
+                if (size > MEDIA_SIZE_THRESHOLD) {
                     AndroidUtility.showToast(ChatActivity.this, "Media File can't be over 25MB");
                     return;
                 }
@@ -164,7 +171,7 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void setUpUserStatusListener() {
-        FirebaseUtility.getUserById(otherUser.getUserId())
+        FirebaseUtility.getUserById(otherUserId)
                 .addSnapshotListener((value, error) -> {
                     String tag = "CHAT_USER_DOCUMENT_LISTENER";
                     if (error != null) {
@@ -175,8 +182,10 @@ public class ChatActivity extends AppCompatActivity {
                     if (value != null && value.exists()) {
                         Log.d(tag, "Current data: has changed");
                         String status = value.getString("status");
+                        Timestamp lastActive = value.getTimestamp("lastActive");
                         if (status != null) {
                             AndroidUtility.changeAvatarProfileColor(status, otherUserProfileImageView, ChatActivity.this);
+                            changeStatusText(status, lastActive);
                         }
                     } else {
                         Log.d(tag, "Current data: null");
@@ -184,12 +193,32 @@ public class ChatActivity extends AppCompatActivity {
                 });
     }
 
+    private void changeStatusText(String status, Timestamp timestamp) {
+        if (status.equals("online")) {
+            otherUserStatusTxt.setText("Online");
+            otherUserStatusTxt.setTextColor(Color.GREEN);
+        } else {
+            otherUserStatusTxt.setText(
+                    String.format("Last active: %s", FirebaseUtility.timestampToCustomString(timestamp))
+            );
+            otherUserStatusTxt.setTextColor(Color.DKGRAY);
+        }
+    }
+
     private void setOtherUserData() {
-        otherUsername.setText(otherUser.getUsername());
-        FirebaseUtility.getProfilePictureByUserId(otherUser.getUserId()).getDownloadUrl()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        Uri uri = task.getResult();
+        FirebaseUtility.getUserById(otherUserId).get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                otherUser = task.getResult().toObject(User.class);
+                otherUsername.setText(otherUser.getUsername());
+                AndroidUtility.changeAvatarProfileColor(otherUser.getStatus(), otherUserProfileImageView, ChatActivity.this);
+                changeStatusText(otherUser.getStatus(), otherUser.getLastActive());
+            }
+        });
+
+        FirebaseUtility.getProfilePictureByUserId(otherUserId).getDownloadUrl()
+                .addOnCompleteListener(task1 -> {
+                    if (task1.isSuccessful()) {
+                        Uri uri = task1.getResult();
                         AndroidUtility.setProfilePicture(ChatActivity.this, uri, otherUserProfileImageView);
                     }
                 });
@@ -202,7 +231,7 @@ public class ChatActivity extends AppCompatActivity {
         FirestoreRecyclerOptions<ChatMessage> options = new FirestoreRecyclerOptions.Builder<ChatMessage>()
                 .setQuery(query, ChatMessage.class).build();
 
-        adapter = new ChatRoomRecyclerAdapter(options, ChatActivity.this, otherUser.getUserId());
+        adapter = new ChatRoomRecyclerAdapter(options, ChatActivity.this, otherUserId);
         LinearLayoutManager manager = new LinearLayoutManager(ChatActivity.this);
         recyclerView.setLayoutManager(manager);
         recyclerView.setAdapter(adapter);
@@ -272,7 +301,7 @@ public class ChatActivity extends AppCompatActivity {
                 chatroomId, type, mediaFieldId
         );
 
-        // update image file to firebase
+        // update media file to firebase
         updateMediaFileToFirebase(uri, chatroomId, mediaFieldId, chatMessage);
     }
 

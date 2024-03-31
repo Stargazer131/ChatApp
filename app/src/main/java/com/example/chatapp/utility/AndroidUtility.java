@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.util.Log;
 import android.util.Patterns;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
@@ -17,6 +18,8 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.example.chatapp.R;
 import com.example.chatapp.activity.MainActivity;
+import com.example.chatapp.model.User;
+import com.google.firebase.Timestamp;
 
 import java.util.ArrayList;
 import java.util.regex.Matcher;
