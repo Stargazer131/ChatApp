@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.chatapp.R;
 import com.example.chatapp.fragment.FriendFragment;
+import com.example.chatapp.fragment.FriendRequestFragment;
 import com.example.chatapp.fragment.NotificationFragment;
 import com.example.chatapp.fragment.ProfileFragment;
 import com.example.chatapp.fragment.RecentChatFragment;
@@ -21,7 +22,7 @@ public class MainActivity extends AppCompatActivity {
     private RecentChatFragment chatFragment;
     private ProfileFragment profileFragment;
     private FriendFragment friendFragment;
-    private NotificationFragment notificationFragment;
+    private FriendRequestFragment friendRequestFragment;
     private ImageButton searchButton;
 
     @Override
@@ -32,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
         chatFragment = new RecentChatFragment();
         profileFragment = new ProfileFragment();
         friendFragment = new FriendFragment();
-        notificationFragment = new NotificationFragment();
+        friendRequestFragment = new FriendRequestFragment();
         bottomNavigationView = findViewById(R.id.bottom_navigation);
         searchButton = findViewById(R.id.main_search_btn);
 
@@ -50,14 +51,14 @@ public class MainActivity extends AppCompatActivity {
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.main_frame_layout, profileFragment).commit();
             }
-//            if (item.getItemId() == R.id.menu_notification) {
-//                getSupportFragmentManager().beginTransaction()
-//                        .replace(R.id.main_frame_layout, notificationFragment).commit();
-//            }
-//            if (item.getItemId() == R.id.menu_friend) {
-//                getSupportFragmentManager().beginTransaction()
-//                        .replace(R.id.main_frame_layout, friendFragment).commit();
-//            }
+            if (item.getItemId() == R.id.menu_friend) {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.main_frame_layout, friendFragment).commit();
+            }
+            if (item.getItemId() == R.id.menu_friend_request) {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.main_frame_layout, friendRequestFragment).commit();
+            }
             return true;
         });
         bottomNavigationView.setSelectedItemId(R.id.menu_chat);

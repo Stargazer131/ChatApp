@@ -42,7 +42,7 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
                 android:layout_marginEnd="10dp"
-                tools:text="13/01/2002 13:00" />
+                tools:text="13/01/20" />
         </RelativeLayout>
 
         <TextView

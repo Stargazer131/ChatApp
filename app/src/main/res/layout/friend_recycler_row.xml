@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="10dp"
+    android:background="@drawable/edit_text_rounded_corner"
+    android:elevation="2dp">
+
+    <ImageView
+        android:id="@+id/profile_picture_image_view"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:layout_alignParentStart="true"
+        android:layout_centerInParent="true"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginBottom="10dp"
+        android:background="@drawable/circular_bg"
+        android:backgroundTint="@color/off_white"
+        android:padding="4dp"
+        android:src="@drawable/ic_person" />
+
+    <LinearLayout
+        android:layout_centerVertical="true"
+        android:layout_toEndOf="@id/profile_picture_image_view"
+        android:id="@+id/middle_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/text_username"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="User name"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/text_email"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="example@gmail.com" />
+
+    </LinearLayout>
+
+    <TextView
+        android:layout_marginEnd="10dp"
+        android:layout_centerVertical="true"
+        android:layout_alignParentEnd="true"
+        android:layout_gravity="center"
+        android:id="@+id/text_last_active"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="13:01" />
+
+</RelativeLayout>

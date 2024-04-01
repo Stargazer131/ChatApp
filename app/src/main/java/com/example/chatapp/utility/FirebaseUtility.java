@@ -24,6 +24,16 @@ import java.util.List;
 import java.util.Locale;
 
 public class FirebaseUtility {
+    private static final String USER_TABLE = "users";
+    private static final String CHATROOM_TABLE = "chatrooms";
+    private static final String CHAT_MESSAGE_TABLE = "chats";
+    private static final String FRIEND_REQUEST_TABLE = "friend_requests";
+    private static final String USER_RELATIONSHIP_TABLE = "user_relationships";
+
+    private static final String USER_PROFILE_STORAGE = "profile_pic";
+    private static final String USER_MEDIA_FILE_STORAGE = "media_file";
+
+
     public static String getCurrentUserId() {
         return FirebaseAuth.getInstance().getUid();
     }
@@ -37,7 +47,7 @@ public class FirebaseUtility {
     }
 
     public static DocumentReference getUserById(String userId) {
-        return FirebaseFirestore.getInstance().collection("users").document(userId);
+        return FirebaseFirestore.getInstance().collection(USER_TABLE).document(userId);
     }
 
     public static void logout() {
@@ -79,25 +89,55 @@ public class FirebaseUtility {
         updateUserStatusAndLastActive(getCurrentUserId());
     }
 
-    //////
+    public static CollectionReference getAllFriendRequest() {
+        return FirebaseFirestore.getInstance().collection(FRIEND_REQUEST_TABLE);
+    }
+
+    public static CollectionReference getAllUserRelationship() {
+        return FirebaseFirestore.getInstance().collection(USER_RELATIONSHIP_TABLE);
+    }
 
     public static CollectionReference getAllUser() {
-        return FirebaseFirestore.getInstance().collection("users");
+        return FirebaseFirestore.getInstance().collection(USER_TABLE);
     }
 
     public static DocumentReference getChatRoomById(String chatroomId) {
-        return FirebaseFirestore.getInstance().collection("chatrooms").document(chatroomId);
+        return FirebaseFirestore.getInstance().collection(CHATROOM_TABLE).document(chatroomId);
+    }
+
+    public static DocumentReference getFriendRequestById(String friendRequestId) {
+        return FirebaseFirestore.getInstance().collection(FRIEND_REQUEST_TABLE).document(friendRequestId);
+    }
+
+    public static DocumentReference getUserRelationshipById(String userRelationshipId) {
+        return FirebaseFirestore.getInstance().collection(USER_RELATIONSHIP_TABLE).document(userRelationshipId);
     }
 
     public static CollectionReference getAllChatMessageOfChatRoomById(String chatroomId) {
-        return getChatRoomById(chatroomId).collection("chats");
+        return getChatRoomById(chatroomId).collection(CHAT_MESSAGE_TABLE);
     }
 
     public static CollectionReference getAllChatRoom() {
-        return FirebaseFirestore.getInstance().collection("chatrooms");
+        return FirebaseFirestore.getInstance().collection(CHATROOM_TABLE);
     }
 
     public static String getChatRoomId(String userId1, String userId2) {
+        if (userId1.hashCode() < userId2.hashCode()) {
+            return userId1 + "_" + userId2;
+        } else {
+            return userId2 + "_" + userId1;
+        }
+    }
+
+    public static String getFriendRequestId(String userId1, String userId2) {
+        if (userId1.hashCode() < userId2.hashCode()) {
+            return userId1 + "_" + userId2;
+        } else {
+            return userId2 + "_" + userId1;
+        }
+    }
+
+    public static String getUserRelationshipId(String userId1, String userId2) {
         if (userId1.hashCode() < userId2.hashCode()) {
             return userId1 + "_" + userId2;
         } else {
@@ -113,18 +153,26 @@ public class FirebaseUtility {
         }
     }
 
+    public static DocumentReference getOtherUserFromUserRelationship(List<String> userIds) {
+        if (userIds.get(0).equals(FirebaseUtility.getCurrentUserId())) {
+            return getAllUser().document(userIds.get(1));
+        } else {
+            return getAllUser().document(userIds.get(0));
+        }
+    }
+
     public static StorageReference getCurrentProfilePicture() {
         return getProfilePictureByUserId(FirebaseUtility.getCurrentUserId());
     }
 
     public static StorageReference getProfilePictureByUserId(String userId) {
         return FirebaseStorage.getInstance().getReference()
-                .child("profile_pic").child(userId);
+                .child(USER_PROFILE_STORAGE).child(userId);
     }
 
     public static StorageReference getMediaFileOfChatRoomById(String chatRoomId, String mediaFileId) {
         return FirebaseStorage.getInstance().getReference()
-                .child("media_file")
+                .child(USER_MEDIA_FILE_STORAGE)
                 .child(chatRoomId)
                 .child(mediaFileId);
     }
@@ -134,10 +182,10 @@ public class FirebaseUtility {
         Date date = timestamp.toDate();
         if(now.getDate() == date.getDate()) {
             SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
-            return "Today" + " " + dateFormat.format(date);
+            return dateFormat.format(date);
 
         } else {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM", Locale.getDefault());
             return dateFormat.format(date);
         }
     }

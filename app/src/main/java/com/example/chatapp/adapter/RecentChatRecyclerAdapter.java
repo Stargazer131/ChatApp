@@ -2,6 +2,7 @@ package com.example.chatapp.adapter;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.Uri;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -22,9 +23,10 @@ import com.example.chatapp.utility.AndroidUtility;
 import com.example.chatapp.utility.FirebaseUtility;
 import com.firebase.ui.firestore.FirestoreRecyclerAdapter;
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
+import com.google.firebase.Timestamp;
 
 public class RecentChatRecyclerAdapter
-        extends FirestoreRecyclerAdapter<ChatRoom, RecentChatRecyclerAdapter.RecentChatModelViewHolder> {
+        extends FirestoreRecyclerAdapter<ChatRoom, RecentChatRecyclerAdapter.RecentChatViewHolder> {
     private Context context;
 
     public RecentChatRecyclerAdapter(@NonNull FirestoreRecyclerOptions<ChatRoom> options, Context context) {
@@ -33,7 +35,7 @@ public class RecentChatRecyclerAdapter
     }
 
     @Override
-    protected void onBindViewHolder(@NonNull RecentChatModelViewHolder holder, int position, @NonNull ChatRoom model) {
+    protected void onBindViewHolder(@NonNull RecentChatViewHolder holder, int position, @NonNull ChatRoom model) {
         if (model.getLastMessageSenderId().equals("")) {
             holder.parent.setLayoutParams(new RecyclerView.LayoutParams(0, 0));
         }
@@ -60,24 +62,27 @@ public class RecentChatRecyclerAdapter
                     }
                 });
 
-        FirebaseUtility.getOtherUserFromChatroom(model.getUserIds())
-                .addSnapshotListener((value, error) -> {
-                    String tag = "RECENT_CHAT_USER_DOCUMENT_LISTENER";
-                    if (error != null) {
-                        Log.w(tag, "Listen failed.", error);
-                        return;
-                    }
-
-                    if (value != null && value.exists()) {
-                        Log.d(tag, "Current data: has changed");
-                        String status = value.getString("status");
-                        if(status != null) {
-                            AndroidUtility.changeAvatarProfileColor(status, holder.profilePic, context);
+        if(!holder.listenerAttached) {
+            FirebaseUtility.getOtherUserFromChatroom(model.getUserIds())
+                    .addSnapshotListener((value, error) -> {
+                        String tag = "RECENT_CHAT_USER_DOCUMENT_LISTENER";
+                        if (error != null) {
+                            Log.w(tag, "Listen failed.", error);
+                            return;
                         }
-                    } else {
-                        Log.d(tag, "Current data: null");
-                    }
-                });
+
+                        if (value != null && value.exists()) {
+                            Log.d(tag, "Current data: has changed");
+                            String status = value.getString("status");
+                            if(status != null) {
+                                AndroidUtility.changeAvatarProfileColor(status, holder.profilePic, context);
+                            }
+                        } else {
+                            Log.d(tag, "Current data: null");
+                        }
+                    });
+            holder.listenerAttached = true;
+        }
     }
 
     private void openChatActivity(User otherUser, String chatRoomId) {
@@ -89,7 +94,7 @@ public class RecentChatRecyclerAdapter
         context.startActivity(intent);
     }
 
-    private void setOtherUserAvatar(String userId, @NonNull RecentChatModelViewHolder holder) {
+    private void setOtherUserAvatar(String userId, @NonNull RecentChatViewHolder holder) {
         FirebaseUtility.getProfilePictureByUserId(userId).getDownloadUrl()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
@@ -101,19 +106,20 @@ public class RecentChatRecyclerAdapter
 
     @NonNull
     @Override
-    public RecentChatModelViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public RecentChatViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(context).inflate(R.layout.recent_chat_recycler_row, parent, false);
-        return new RecentChatModelViewHolder(view);
+        return new RecentChatViewHolder(view);
     }
 
-    class RecentChatModelViewHolder extends RecyclerView.ViewHolder {
+    class RecentChatViewHolder extends RecyclerView.ViewHolder {
         TextView usernameText;
         TextView lastMessageText;
         TextView lastMessageTime;
         ImageView profilePic;
         LinearLayout parent;
+        boolean listenerAttached = false;
 
-        public RecentChatModelViewHolder(@NonNull View itemView) {
+        public RecentChatViewHolder(@NonNull View itemView) {
             super(itemView);
             usernameText = itemView.findViewById(R.id.text_username);
             lastMessageText = itemView.findViewById(R.id.last_message_text);

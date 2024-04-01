@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/friend_request_row_layout"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="10dp"
+    android:background="@drawable/edit_text_rounded_corner"
+    android:elevation="2dp">
+
+    <ImageView
+        android:id="@+id/profile_picture_image_view"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:layout_margin="10dp"
+        android:background="@drawable/circular_bg"
+        android:backgroundTint="@color/white"
+        android:padding="4dp"
+        android:src="@drawable/ic_person" />
+
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center">
+
+        <TextView
+            android:id="@+id/text_username"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            tools:text="User name" />
+
+        <ImageView
+            android:id="@+id/yes_btn"
+            android:src="@drawable/ic_yes"
+            android:layout_toStartOf="@id/no_btn"
+            android:layout_marginEnd="25dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"/>
+
+        <ImageView
+            android:src="@drawable/ic_no"
+            android:id="@+id/no_btn"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="15dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"/>
+
+    </RelativeLayout>
+
+
+</LinearLayout>
