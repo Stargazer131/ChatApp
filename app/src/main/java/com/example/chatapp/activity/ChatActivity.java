@@ -1,5 +1,6 @@
 package com.example.chatapp.activity;
 
+import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -8,6 +9,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.provider.OpenableColumns;
 import android.util.Log;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -15,6 +17,8 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -41,6 +45,7 @@ import com.google.firebase.firestore.Query;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import okhttp3.Call;
@@ -70,10 +75,12 @@ public class ChatActivity extends AppCompatActivity {
     // for sending image
     private ActivityResultLauncher<PickVisualMediaRequest> imagePickerLauncher;
     private ActivityResultLauncher<PickVisualMediaRequest> videoPickerLauncher;
+    private ActivityResultLauncher<Intent> filePickerLauncher;
     public static final String MESSAGE_TYPE_STRING = "String";
     public static final String MESSAGE_TYPE_IMAGE = "Image";
     public static final String MESSAGE_TYPE_VIDEO = "Video";
     public static final String MESSAGE_TYPE_AUDIO = "Audio";
+    public static final String MESSAGE_TYPE_FILE = "File";
     public static final long MB_THRESHOLD = 25;
     public static final long MEDIA_SIZE_THRESHOLD = 1024 * 1024 * MB_THRESHOLD;
 
@@ -96,6 +103,7 @@ public class ChatActivity extends AppCompatActivity {
         btnAddOtherFile = findViewById(R.id.btn_send_other_file);
         otherUserStatusTxt = findViewById(R.id.other_user_status_txt);
 
+        setUpFilePicker();
         setUpImagePicker();
         setUpVideoPicker();
         setOtherUserData();
@@ -121,12 +129,57 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
+    private void setUpFilePicker() {
+        filePickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(), result -> {
+                    if (result.getResultCode() == Activity.RESULT_OK) {
+                        Uri uri = result.getData().getData();
+                        if(uri == null) {
+                            return;
+                        }
+
+                        long size = getMediaFileSize(ChatActivity.this, uri);
+                        if (size > MEDIA_SIZE_THRESHOLD) {
+                            AndroidUtility.showToast(
+                                    ChatActivity.this,
+                                    String.format(Locale.getDefault(), "File can't be over %dMB", MB_THRESHOLD)
+                            );
+                            return;
+                        }
+
+                        sendFileToUser(uri);
+                    }
+        });
+    }
+
+    private String getFileNameFromUri(Uri uri) {
+        String fileName = "Unknown";
+        if (uri != null) {
+            try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
+                if (cursor != null && cursor.moveToFirst()) {
+                    int displayNameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                    if (displayNameIndex != -1) {
+                        fileName = cursor.getString(displayNameIndex);
+                    }
+                }
+            } catch (Exception e) {
+                // Handle any potential exceptions here
+                e.printStackTrace();
+            }
+        }
+        return fileName;
+    }
+
+
     private void setUpVideoPicker() {
         videoPickerLauncher = registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), o -> {
             if (o != null) {
                 long size = getMediaFileSize(ChatActivity.this, o);
                 if (size > MEDIA_SIZE_THRESHOLD) {
-                    AndroidUtility.showToast(ChatActivity.this, "Media File can't be over 25MB");
+                    AndroidUtility.showToast(
+                            ChatActivity.this,
+                            String.format(Locale.getDefault(), "Media File can't be over %dMB", MB_THRESHOLD)
+                    );
                     return;
                 }
                 sendMediaFileToUser(o, MESSAGE_TYPE_VIDEO);
@@ -139,7 +192,10 @@ public class ChatActivity extends AppCompatActivity {
             if (o != null) {
                 long size = getMediaFileSize(ChatActivity.this, o);
                 if (size > MEDIA_SIZE_THRESHOLD) {
-                    AndroidUtility.showToast(ChatActivity.this, "Media File can't be over 25MB");
+                    AndroidUtility.showToast(
+                            ChatActivity.this,
+                            String.format(Locale.getDefault(), "Media File can't be over %dMB", MB_THRESHOLD)
+                    );
                     return;
                 }
                 sendMediaFileToUser(o, MESSAGE_TYPE_IMAGE);
@@ -162,6 +218,12 @@ public class ChatActivity extends AppCompatActivity {
                 videoPickerLauncher.launch(new PickVisualMediaRequest.Builder()
                         .setMediaType(ActivityResultContracts.PickVisualMedia.VideoOnly.INSTANCE)
                         .build());
+            }
+            if (item.getItemId() == R.id.menu_item_file) {
+                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType("*/*"); // You can set specific MIME types here, e.g., "application/pdf" for PDF files
+                filePickerLauncher.launch(intent);
             }
 
             return true;
@@ -279,6 +341,30 @@ public class ChatActivity extends AppCompatActivity {
                         Log.d("SEND_Notification", String.valueOf(isNotificationSuccessful));
                     }
                 });
+    }
+
+    private void sendFileToUser(Uri uri) {
+        // update chat room
+        String message = getFileNameFromUri(uri);
+        Timestamp timestampNow = Timestamp.now();
+
+        chatRoom.setLastMessageTimestamp(timestampNow);
+        chatRoom.setLastMessageSenderId(FirebaseUtility.getCurrentUserId());
+        chatRoom.setLastMessage(message);
+        FirebaseUtility.getChatRoomById(chatroomId).set(chatRoom);
+
+        // set message type
+        // generate unique media file key
+        String mediaFieldId = String.format("%s_%s",
+                FirebaseUtility.getCurrentUserId(), FirebaseUtility.timestampToFullString(timestampNow)
+        );
+        ChatMessage chatMessage = new ChatMessage(
+                message, FirebaseUtility.getCurrentUserId(), timestampNow,
+                chatroomId, MESSAGE_TYPE_FILE, mediaFieldId
+        );
+
+        // update media file to firebase
+        updateMediaFileToFirebase(uri, chatroomId, mediaFieldId, chatMessage);
     }
 
     private void sendMediaFileToUser(Uri uri, String type) {

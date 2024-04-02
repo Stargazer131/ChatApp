@@ -56,7 +56,7 @@
             android:background="@drawable/circular_bg"
             android:backgroundTint="@color/my_primary"
             android:scaleType="centerCrop"
-            android:src="@drawable/ic_person" />
+            android:src="@drawable/ic_person_bottom_nav" />
 
         <!-- First TextView with icon -->
         <LinearLayout

@@ -25,7 +25,7 @@
         android:background="@drawable/circular_bg"
         android:backgroundTint="@color/my_primary"
         android:scaleType="centerCrop"
-        android:src="@drawable/ic_person" />
+        android:src="@drawable/ic_person_bottom_nav" />
 
     <EditText
         android:id="@+id/edit_text_profile_username"

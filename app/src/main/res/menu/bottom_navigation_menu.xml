@@ -3,12 +3,12 @@
 
     <item
         android:id="@+id/menu_chat"
-        android:icon="@drawable/ic_chat"
+        android:icon="@drawable/ic_chat_bottom_nav"
         android:title="Chats" />
 
     <item
         android:id="@+id/menu_friend"
-        android:icon="@drawable/ic_friend"
+        android:icon="@drawable/ic_friend_bottom_nav"
         android:title="Friends" />
 
     <item
@@ -18,7 +18,7 @@
 
     <item
         android:id="@+id/menu_profile"
-        android:icon="@drawable/ic_person"
+        android:icon="@drawable/ic_person_bottom_nav"
         android:title="Profile" />
 
 </menu>

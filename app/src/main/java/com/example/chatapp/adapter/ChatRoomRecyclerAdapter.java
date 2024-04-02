@@ -1,8 +1,10 @@
 package com.example.chatapp.adapter;
 
+import android.app.DownloadManager;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Environment;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.method.LinkMovementMethod;
@@ -35,7 +37,11 @@ import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.storage.FileDownloadTask;
 
+import java.io.File;
 import java.util.ArrayList;
 
 @SuppressWarnings("deprecation")
@@ -43,10 +49,13 @@ public class ChatRoomRecyclerAdapter extends FirestoreRecyclerAdapter<ChatMessag
     private static final int TYPE_USER_MESSAGE = 0;
     private static final int TYPE_USER_IMAGE = 2;
     private static final int TYPE_USER_VIDEO = 4;
+    private static final int TYPE_USER_FILE = 6;
 
     private static final int TYPE_OTHER_USER_MESSAGE = 1;
     private static final int TYPE_OTHER_USER_IMAGE = 3;
     private static final int TYPE_OTHER_USER_VIDEO = 5;
+    private static final int TYPE_OTHER_USER_FILE = 7;
+
     private Context context;
     private String currentUserId;
     private String otherUserId;
@@ -83,9 +92,18 @@ public class ChatRoomRecyclerAdapter extends FirestoreRecyclerAdapter<ChatMessag
             View userVideoView = inflater.inflate(R.layout.user_video_recycler_row, parent, false);
             return new UserVideoViewHolder(userVideoView);
 
-        } else {
+        } else if (viewType == TYPE_OTHER_USER_VIDEO) {
             View otherUserVideoView = inflater.inflate(R.layout.other_user_video_recycler_row, parent, false);
             return new OtherUserVideoViewHolder(otherUserVideoView);
+
+        } else if (viewType == TYPE_USER_FILE) { // USE FOR BOTH FILE AND MESSAGE
+            View userMessageView = inflater.inflate(R.layout.user_message_recycler_row, parent, false);
+            return new UserMessageViewHolder(userMessageView);
+
+        } else { // USE FOR BOTH FILE AND MESSAGE
+            View otherUserMessageView = inflater.inflate(R.layout.other_user_message_recycler_row, parent, false);
+            return new OtherUserMessageViewHolder(otherUserMessageView);
+
         }
     }
 
@@ -94,20 +112,26 @@ public class ChatRoomRecyclerAdapter extends FirestoreRecyclerAdapter<ChatMessag
         ChatMessage model = getItem(position);
 
         if (model.getSenderId().equals(currentUserId)) {
-            if (model.getType().equals(ChatActivity.MESSAGE_TYPE_STRING)) {
-                return TYPE_USER_MESSAGE;
-            } else if (model.getType().equals(ChatActivity.MESSAGE_TYPE_IMAGE)) {
-                return TYPE_USER_IMAGE;
-            } else {
-                return TYPE_USER_VIDEO;
+            switch (model.getType()) {
+                case ChatActivity.MESSAGE_TYPE_STRING:
+                    return TYPE_USER_MESSAGE;
+                case ChatActivity.MESSAGE_TYPE_IMAGE:
+                    return TYPE_USER_IMAGE;
+                case ChatActivity.MESSAGE_TYPE_VIDEO:
+                    return TYPE_USER_VIDEO;
+                default:
+                    return TYPE_USER_FILE;
             }
         } else {
-            if (model.getType().equals(ChatActivity.MESSAGE_TYPE_STRING)) {
-                return TYPE_OTHER_USER_MESSAGE;
-            } else if (model.getType().equals(ChatActivity.MESSAGE_TYPE_IMAGE)) {
-                return TYPE_OTHER_USER_IMAGE;
-            } else {
-                return TYPE_OTHER_USER_VIDEO;
+            switch (model.getType()) {
+                case ChatActivity.MESSAGE_TYPE_STRING:
+                    return TYPE_OTHER_USER_MESSAGE;
+                case ChatActivity.MESSAGE_TYPE_IMAGE:
+                    return TYPE_OTHER_USER_IMAGE;
+                case ChatActivity.MESSAGE_TYPE_VIDEO:
+                    return TYPE_OTHER_USER_VIDEO;
+                default:
+                    return TYPE_OTHER_USER_FILE;
             }
         }
     }
@@ -140,10 +164,20 @@ public class ChatRoomRecyclerAdapter extends FirestoreRecyclerAdapter<ChatMessag
             setProfileImage(currentUserId, userVideoHolder.leftChatImageProfile);
             setVideoResource(model, userVideoHolder.leftChatVideoView);
 
-        } else {
+        } else if (viewType == TYPE_OTHER_USER_VIDEO) {
             OtherUserVideoViewHolder otherUserVideoHolder = (OtherUserVideoViewHolder) holder;
             setProfileImage(otherUserId, otherUserVideoHolder.rightChatImageProfile);
             setVideoResource(model, otherUserVideoHolder.rightChatVideoView);
+
+        } else if (viewType == TYPE_USER_FILE) {
+            UserMessageViewHolder userMessageHolder = (UserMessageViewHolder) holder;
+            setProfileImage(currentUserId, userMessageHolder.leftChatImageProfile);
+            handleTextDownloadFile(userMessageHolder.leftChatTextview, model);
+
+        } else {
+            OtherUserMessageViewHolder otherUserMessageHolder = (OtherUserMessageViewHolder) holder;
+            setProfileImage(otherUserId, otherUserMessageHolder.rightChatImageProfile);
+            handleTextDownloadFile(otherUserMessageHolder.rightChatTextview, model);
 
         }
     }
@@ -159,6 +193,44 @@ public class ChatRoomRecyclerAdapter extends FirestoreRecyclerAdapter<ChatMessag
             OtherUserVideoViewHolder otherUserImageViewHolder = (OtherUserVideoViewHolder) holder;
             releasePlayer(otherUserImageViewHolder.rightChatVideoView);
         }
+    }
+
+    private void handleTextDownloadFile(TextView textView, ChatMessage model) {
+        String text = model.getMessage();
+        SpannableString spannableString = new SpannableString(text);
+        ClickableSpan clickableSpan = new ClickableSpan() {
+            @Override
+            public void onClick(@NonNull View view) {
+                try {
+                    downloadFile(model);
+                } catch (Exception ignored) {
+
+                }
+            }
+        };
+
+        spannableString.setSpan(
+                clickableSpan, 0, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+        );
+        textView.setText(spannableString);
+        textView.setMovementMethod(LinkMovementMethod.getInstance());
+    }
+
+    private void downloadFile(ChatMessage model) {
+        FirebaseUtility.getMediaFileOfChatRoomById(model.getChatRoomId(), model.getMediaFileId())
+                .getDownloadUrl().addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Uri fileUri = task.getResult();
+                        DownloadManager.Request request = new DownloadManager.Request(fileUri);
+                        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, model.getMessage());
+                        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                        DownloadManager downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);;
+                        long downloadId = downloadManager.enqueue(request);
+
+                    } else {
+                        AndroidUtility.showToast(context, "Download failed");
+                    }
+                });
     }
 
     private void setVideoResource(ChatMessage model, PlayerView videoView) {
@@ -203,10 +275,14 @@ public class ChatRoomRecyclerAdapter extends FirestoreRecyclerAdapter<ChatMessag
             ClickableSpan clickableSpan = new ClickableSpan() {
                 @Override
                 public void onClick(@NonNull View view) {
-                    Uri uri = Uri.parse(url);
-                    Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    context.startActivity(intent);
+                    try {
+                        Uri uri = Uri.parse(url);
+                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        context.startActivity(intent);
+                    } catch (Exception ignored) {
+                        AndroidUtility.showToast(context, "Invalid link");
+                    }
                 }
             };
 
@@ -241,6 +317,58 @@ public class ChatRoomRecyclerAdapter extends FirestoreRecyclerAdapter<ChatMessag
                 });
     }
 
+    // USE FOR BOTH FILE AND MESSAGE
+    class UserMessageViewHolder extends RecyclerView.ViewHolder {
+        ImageView leftChatImageProfile;
+
+        TextView leftChatTextview;
+
+        public UserMessageViewHolder(@NonNull View itemView) {
+            super(itemView);
+            leftChatTextview = itemView.findViewById(R.id.left_chat_textview);
+            leftChatImageProfile = itemView.findViewById(R.id.left_profile_picture);
+        }
+    }
+
+    // USE FOR BOTH FILE AND MESSAGE
+    class OtherUserMessageViewHolder extends RecyclerView.ViewHolder {
+        TextView rightChatTextview;
+        ImageView rightChatImageProfile;
+
+        public OtherUserMessageViewHolder(@NonNull View itemView) {
+            super(itemView);
+
+            rightChatTextview = itemView.findViewById(R.id.right_chat_textview);
+            rightChatImageProfile = itemView.findViewById(R.id.right_profile_picture);
+        }
+    }
+
+    class UserImageViewHolder extends RecyclerView.ViewHolder {
+        ImageView leftChatImageProfile;
+        ImageView leftChatImageView;
+
+        public UserImageViewHolder(@NonNull View itemView) {
+            super(itemView);
+
+            leftChatImageProfile = itemView.findViewById(R.id.left_profile_picture);
+            leftChatImageView = itemView.findViewById(R.id.left_chat_imageview);
+        }
+
+    }
+
+
+    class OtherUserImageViewHolder extends RecyclerView.ViewHolder {
+        ImageView rightChatImageProfile;
+        ImageView rightChatImageView;
+
+        public OtherUserImageViewHolder(@NonNull View itemView) {
+            super(itemView);
+
+            rightChatImageProfile = itemView.findViewById(R.id.right_profile_picture);
+            rightChatImageView = itemView.findViewById(R.id.right_chat_imageview);
+        }
+    }
+
     class OtherUserVideoViewHolder extends RecyclerView.ViewHolder {
         ImageView rightChatImageProfile;
         PlayerView rightChatVideoView;
@@ -265,54 +393,5 @@ public class ChatRoomRecyclerAdapter extends FirestoreRecyclerAdapter<ChatMessag
             leftChatVideoView = itemView.findViewById(R.id.left_chat_videoview);
         }
 
-    }
-
-    class UserMessageViewHolder extends RecyclerView.ViewHolder {
-        ImageView leftChatImageProfile;
-
-        TextView leftChatTextview;
-
-        public UserMessageViewHolder(@NonNull View itemView) {
-            super(itemView);
-            leftChatTextview = itemView.findViewById(R.id.left_chat_textview);
-            leftChatImageProfile = itemView.findViewById(R.id.left_profile_picture);
-        }
-    }
-
-    class UserImageViewHolder extends RecyclerView.ViewHolder {
-        ImageView leftChatImageProfile;
-        ImageView leftChatImageView;
-
-        public UserImageViewHolder(@NonNull View itemView) {
-            super(itemView);
-
-            leftChatImageProfile = itemView.findViewById(R.id.left_profile_picture);
-            leftChatImageView = itemView.findViewById(R.id.left_chat_imageview);
-        }
-
-    }
-
-    class OtherUserMessageViewHolder extends RecyclerView.ViewHolder {
-        TextView rightChatTextview;
-        ImageView rightChatImageProfile;
-
-        public OtherUserMessageViewHolder(@NonNull View itemView) {
-            super(itemView);
-
-            rightChatTextview = itemView.findViewById(R.id.right_chat_textview);
-            rightChatImageProfile = itemView.findViewById(R.id.right_profile_picture);
-        }
-    }
-
-    class OtherUserImageViewHolder extends RecyclerView.ViewHolder {
-        ImageView rightChatImageProfile;
-        ImageView rightChatImageView;
-
-        public OtherUserImageViewHolder(@NonNull View itemView) {
-            super(itemView);
-
-            rightChatImageProfile = itemView.findViewById(R.id.right_profile_picture);
-            rightChatImageView = itemView.findViewById(R.id.right_chat_imageview);
-        }
     }
 }

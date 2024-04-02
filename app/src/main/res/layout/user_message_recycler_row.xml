@@ -17,7 +17,7 @@
             android:layout_height="35dp"
             android:background="@drawable/circular_bg"
             android:backgroundTint="@color/off_white"
-            android:src="@drawable/ic_person"
+            android:src="@drawable/ic_person_bottom_nav"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
