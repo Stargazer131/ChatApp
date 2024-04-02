@@ -12,9 +12,6 @@ import android.view.ViewGroup;
 
 import com.example.chatapp.R;
 import com.example.chatapp.adapter.FriendRecyclerAdapter;
-import com.example.chatapp.adapter.FriendRequestRecyclerAdapter;
-import com.example.chatapp.model.FriendRequest;
-import com.example.chatapp.model.User;
 import com.example.chatapp.model.UserRelationship;
 import com.example.chatapp.utility.FirebaseUtility;
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;

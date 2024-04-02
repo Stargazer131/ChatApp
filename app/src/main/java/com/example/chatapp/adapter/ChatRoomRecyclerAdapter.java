@@ -37,11 +37,7 @@ import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.storage.FileDownloadTask;
 
-import java.io.File;
 import java.util.ArrayList;
 
 @SuppressWarnings("deprecation")
@@ -224,7 +220,7 @@ public class ChatRoomRecyclerAdapter extends FirestoreRecyclerAdapter<ChatMessag
                         DownloadManager.Request request = new DownloadManager.Request(fileUri);
                         request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, model.getMessage());
                         request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-                        DownloadManager downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);;
+                        DownloadManager downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
                         long downloadId = downloadManager.enqueue(request);
 
                     } else {

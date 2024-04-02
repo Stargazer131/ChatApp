@@ -52,7 +52,6 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.github.dhaval2404:imagepicker:2.1")
     implementation("com.github.bumptech.glide:glide:4.16.0")
-    implementation("io.ak1.pix:piximagepicker:1.6.3")
     implementation("androidx.lifecycle:lifecycle-process:2.7.0")
     implementation("androidx.lifecycle:lifecycle-common:2.7.0")
     implementation("com.google.android.exoplayer:exoplayer-core:2.19.1")

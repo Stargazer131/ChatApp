@@ -20,8 +20,6 @@ import com.example.chatapp.utility.AndroidUtility;
 import com.example.chatapp.utility.FirebaseUtility;
 import com.firebase.ui.firestore.FirestoreRecyclerAdapter;
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 
 import java.util.Arrays;
 

@@ -9,7 +9,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -23,10 +22,7 @@ import com.example.chatapp.utility.AndroidUtility;
 import com.example.chatapp.utility.FirebaseUtility;
 import com.firebase.ui.firestore.FirestoreRecyclerAdapter;
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.Timestamp;
-import com.google.firebase.firestore.DocumentSnapshot;
 
 public class FriendRecyclerAdapter extends
         FirestoreRecyclerAdapter<UserRelationship, FriendRecyclerAdapter.FriendViewHolder> {

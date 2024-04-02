@@ -7,7 +7,6 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.chatapp.R;
@@ -17,10 +16,7 @@ import com.example.chatapp.model.User;
 import com.example.chatapp.model.UserRelationship;
 import com.example.chatapp.utility.AndroidUtility;
 import com.example.chatapp.utility.FirebaseUtility;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.Timestamp;
-import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.util.Arrays;
 

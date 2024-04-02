@@ -1,15 +1,22 @@
 package com.example.chatapp.activity;
 
+import android.Manifest;
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.ImageButton;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+
 
 import com.example.chatapp.R;
 import com.example.chatapp.fragment.FriendFragment;
 import com.example.chatapp.fragment.FriendRequestFragment;
-import com.example.chatapp.fragment.NotificationFragment;
 import com.example.chatapp.fragment.ProfileFragment;
 import com.example.chatapp.fragment.RecentChatFragment;
 import com.example.chatapp.utility.FirebaseUtility;
@@ -24,6 +31,7 @@ public class MainActivity extends AppCompatActivity {
     private FriendFragment friendFragment;
     private FriendRequestFragment friendRequestFragment;
     private ImageButton searchButton;
+    private ActivityResultLauncher<String> requestPermissionLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,8 +69,31 @@ public class MainActivity extends AppCompatActivity {
             }
             return true;
         });
+
         bottomNavigationView.setSelectedItemId(R.id.menu_chat);
         updateFCMToken();
+
+        requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+
+        });
+
+        checkNotificationPermission();
+    }
+
+    private void checkNotificationPermission() {
+        try {
+            NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            if (notificationManager != null) {
+                if (!notificationManager.areNotificationsEnabled()) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        Log.d("NOTIFICATION_REQUEST", "ASK PERMISSION");
+                        requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.d("NOTIFICATION_ERROR", e.getMessage());
+        }
     }
 
     private void updateFCMToken() {

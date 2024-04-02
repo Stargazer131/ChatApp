@@ -2,7 +2,6 @@ package com.example.chatapp.adapter;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
 import android.net.Uri;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -23,7 +22,6 @@ import com.example.chatapp.utility.AndroidUtility;
 import com.example.chatapp.utility.FirebaseUtility;
 import com.firebase.ui.firestore.FirestoreRecyclerAdapter;
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
-import com.google.firebase.Timestamp;
 
 public class RecentChatRecyclerAdapter
         extends FirestoreRecyclerAdapter<ChatRoom, RecentChatRecyclerAdapter.RecentChatViewHolder> {

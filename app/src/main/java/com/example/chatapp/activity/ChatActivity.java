@@ -17,8 +17,6 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -36,10 +34,7 @@ import com.example.chatapp.model.User;
 import com.example.chatapp.utility.AndroidUtility;
 import com.example.chatapp.utility.FirebaseUtility;
 import com.firebase.ui.firestore.FirestoreRecyclerOptions;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.Timestamp;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.Query;
 
 import org.json.JSONObject;
@@ -81,7 +76,7 @@ public class ChatActivity extends AppCompatActivity {
     public static final String MESSAGE_TYPE_VIDEO = "Video";
     public static final String MESSAGE_TYPE_AUDIO = "Audio";
     public static final String MESSAGE_TYPE_FILE = "File";
-    public static final long MB_THRESHOLD = 25;
+    public static final long MB_THRESHOLD = 20;
     public static final long MEDIA_SIZE_THRESHOLD = 1024 * 1024 * MB_THRESHOLD;
 
 
