@@ -52,7 +52,6 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class ChatActivity extends AppCompatActivity {
-
     private User otherUser;
     private String otherUserId;
     private ChatRoom chatRoom;

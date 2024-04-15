@@ -11,14 +11,17 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.chatapp.R;
 import com.example.chatapp.model.User;
 import com.example.chatapp.utility.AndroidUtility;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 public class EmailRegisterActivity extends AppCompatActivity {
-    private EditText usernameEditText, emailEditText, passwordEditText, reenteredPasswordEditText;
+    private TextInputEditText usernameEditText, emailEditText, passwordEditText, reenteredPasswordEditText;
+    private TextInputLayout textInputLayoutPassword, textInputLayoutReenterPassword;
     private Button registerButton;
-    FirebaseAuth firebaseAuth;
+    private FirebaseAuth firebaseAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,6 +33,9 @@ public class EmailRegisterActivity extends AppCompatActivity {
         passwordEditText = findViewById(R.id.edit_text_register_password);
         reenteredPasswordEditText = findViewById(R.id.edit_text_register_reentered_password);
         registerButton = findViewById(R.id.btn_email_register);
+
+        textInputLayoutPassword = findViewById(R.id.text_input_layout_register_password);
+        textInputLayoutReenterPassword = findViewById(R.id.text_input_layout_register_reentered_password);
         firebaseAuth = FirebaseAuth.getInstance();
 
         registerButton.setOnClickListener(v -> {

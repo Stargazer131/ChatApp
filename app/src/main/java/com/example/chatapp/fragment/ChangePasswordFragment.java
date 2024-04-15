@@ -15,10 +15,11 @@ import android.widget.EditText;
 
 import com.example.chatapp.R;
 import com.example.chatapp.utility.AndroidUtility;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class ChangePasswordFragment extends DialogFragment {
-    private EditText oldPasswordInput, newPasswordInput, reenterNewPasswordInput;
+    private TextInputEditText oldPasswordInput, newPasswordInput, reenterNewPasswordInput;
     private Button changeBtn;
     private FirebaseAuth firebaseAuth;
     private String email;

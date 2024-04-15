@@ -7,7 +7,10 @@ import android.content.res.ColorStateList;
 import android.net.Uri;
 import android.util.Log;
 import android.util.Patterns;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
@@ -26,7 +29,15 @@ import java.util.regex.Pattern;
 public class AndroidUtility {
 
     public static void showToast(Context context, String message) {
-        Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+        LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View layout = inflater.inflate(R.layout.toast_layout, null);
+        TextView textView = layout.findViewById(R.id.toast_message);
+        textView.setText(message);
+
+        Toast toast = new Toast(context);
+        toast.setDuration(Toast.LENGTH_SHORT);
+        toast.setView(layout);
+        toast.show();
     }
 
     public static void showOptionPanel(Context context, String title, String message, String positiveButtonText,

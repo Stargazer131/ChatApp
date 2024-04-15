@@ -28,6 +28,7 @@ public class FriendRecyclerAdapter extends
         FirestoreRecyclerAdapter<UserRelationship, FriendRecyclerAdapter.FriendViewHolder> {
 
     private Context context;
+
     public FriendRecyclerAdapter(@NonNull FirestoreRecyclerOptions<UserRelationship> options, Context context) {
         super(options);
         this.context = context;
@@ -36,64 +37,64 @@ public class FriendRecyclerAdapter extends
     @Override
     protected void onBindViewHolder(@NonNull FriendViewHolder holder, int position, @NonNull UserRelationship model) {
         FirebaseUtility.getOtherUserFromUserRelationship(model.getUserIds()).get()
-                        .addOnCompleteListener(task -> {
-                            if(task.isSuccessful()) {
-                                User user = task.getResult().toObject(User.class);
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        User user = task.getResult().toObject(User.class);
 
-                                holder.usernameText.setText(user.getUsername());
-                                holder.emailText.setText(user.getEmail());
-                                AndroidUtility.changeAvatarProfileColor(
-                                        user.getStatus(), holder.profilePicture, context
-                                );
-                                changeStatusText(
-                                        holder.lastActiveText, user.getStatus(), user.getLastActive()
-                                );
+                        holder.usernameText.setText(user.getUsername());
+                        holder.emailText.setText(user.getEmail());
+                        AndroidUtility.changeAvatarProfileColor(
+                                user.getStatus(), holder.profilePicture, context
+                        );
+                        changeStatusText(
+                                holder.lastActiveText, user.getStatus(), user.getLastActive()
+                        );
 
-                                FirebaseUtility.getProfilePictureByUserId(user.getUserId()).getDownloadUrl()
-                                        .addOnCompleteListener(task1 -> {
-                                            if (task1.isSuccessful()) {
-                                                Uri uri = task1.getResult();
-                                                AndroidUtility.setProfilePicture(context, uri, holder.profilePicture);
-                                            }
-                                        });
-
-                                holder.itemView.setOnClickListener(v -> {
-                                    //navigate to user profile activity
-                                    Intent intent = new Intent(context, UserProfileActivity.class);
-                                    intent.putExtra("userId", user.getUserId());
-                                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                    context.startActivity(intent);
+                        FirebaseUtility.getProfilePictureByUserId(user.getUserId()).getDownloadUrl()
+                                .addOnCompleteListener(task1 -> {
+                                    if (task1.isSuccessful()) {
+                                        Uri uri = task1.getResult();
+                                        AndroidUtility.setProfilePicture(context, uri, holder.profilePicture);
+                                    }
                                 });
 
-                                if(!holder.listenerAttached) {
-                                    FirebaseUtility.getUserById(user.getUserId())
-                                            .addSnapshotListener((value, error) -> {
-                                                String tag = "FRIEND_USER_DOCUMENT_LISTENER";
-                                                if (error != null) {
-                                                    Log.w(tag, "Listen failed.", error);
-                                                    return;
-                                                }
-
-                                                if (value != null && value.exists()) {
-                                                    Log.d(tag, "Current data: has changed");
-                                                    String status = value.getString("status");
-                                                    Timestamp timestamp = value.getTimestamp("lastActive");
-                                                    if(status != null) {
-                                                        AndroidUtility.changeAvatarProfileColor(
-                                                                status, holder.profilePicture, context)
-                                                        ;
-                                                        changeStatusText(
-                                                                holder.lastActiveText, status, timestamp
-                                                        );
-                                                    }
-                                                } else {
-                                                    Log.d(tag, "Current data: null");
-                                                }
-                                            });
-                                    holder.listenerAttached = true;
-                                }
-                            }
+                        holder.itemView.setOnClickListener(v -> {
+                            //navigate to user profile activity
+                            Intent intent = new Intent(context, UserProfileActivity.class);
+                            intent.putExtra("userId", user.getUserId());
+                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            context.startActivity(intent);
                         });
+
+                        if (!holder.listenerAttached) {
+                            FirebaseUtility.getUserById(user.getUserId())
+                                    .addSnapshotListener((value, error) -> {
+                                        String tag = "FRIEND_USER_DOCUMENT_LISTENER";
+                                        if (error != null) {
+                                            Log.w(tag, "Listen failed.", error);
+                                            return;
+                                        }
+
+                                        if (value != null && value.exists()) {
+                                            Log.d(tag, "Current data: has changed");
+                                            String status = value.getString("status");
+                                            Timestamp timestamp = value.getTimestamp("lastActive");
+                                            if (status != null) {
+                                                AndroidUtility.changeAvatarProfileColor(
+                                                        status, holder.profilePicture, context)
+                                                ;
+                                                changeStatusText(
+                                                        holder.lastActiveText, status, timestamp
+                                                );
+                                            }
+                                        } else {
+                                            Log.d(tag, "Current data: null");
+                                        }
+                                    });
+                            holder.listenerAttached = true;
+                        }
+                    }
+                });
     }
 
     private void changeStatusText(TextView textView, String status, Timestamp timestamp) {

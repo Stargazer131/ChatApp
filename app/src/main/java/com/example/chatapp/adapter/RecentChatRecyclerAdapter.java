@@ -51,21 +51,23 @@ public class RecentChatRecyclerAdapter
                         if (lastMessageSentByMe) {
                             holder.lastMessageText.setText(String.format("You : %s", model.getLastMessage()));
                         } else {
-                            holder.lastMessageText.setText(
-                                    String.format("%s : %s", otherUser.getUsername(), model.getLastMessage())
-                            );
-                            if(model.getLastMessageStatus().equals(ChatRoom.STATUS_NOT_SEEN)) {
-                                holder.lastMessageText.setTypeface(null, Typeface.BOLD);
-                            }
+                            holder.lastMessageText.setText(model.getLastMessage());
                         }
 
                         holder.usernameText.setText(otherUser.getUsername());
                         holder.lastMessageTime.setText(FirebaseUtility.timestampToCustomString(model.getLastMessageTimestamp()));
                         holder.itemView.setOnClickListener(v -> openChatActivity(otherUser, model.getChatroomId()));
+
+                        if (model.getLastMessageStatus().equals(ChatRoom.STATUS_NOT_SEEN) &&
+                                !model.getLastMessageSenderId().equals(FirebaseUtility.getCurrentUserId())) {
+                            holder.lastMessageText.setTypeface(null, Typeface.BOLD);
+                            holder.lastMessageTime.setTypeface(null, Typeface.BOLD);
+                            holder.usernameText.setTypeface(null, Typeface.BOLD);
+                        }
                     }
                 });
 
-        if(!holder.listenerAttached) {
+        if (!holder.listenerAttached) {
             FirebaseUtility.getOtherUserFromChatroom(model.getUserIds())
                     .addSnapshotListener((value, error) -> {
                         String tag = "RECENT_CHAT_USER_DOCUMENT_LISTENER";
@@ -77,7 +79,7 @@ public class RecentChatRecyclerAdapter
                         if (value != null && value.exists()) {
                             Log.d(tag, "Current data: has changed");
                             String status = value.getString("status");
-                            if(status != null) {
+                            if (status != null) {
                                 AndroidUtility.changeAvatarProfileColor(status, holder.profilePic, context);
                             }
                         } else {

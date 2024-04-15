@@ -13,20 +13,25 @@ import com.example.chatapp.fragment.ResetPasswordFragment;
 import com.example.chatapp.model.User;
 import com.example.chatapp.utility.AndroidUtility;
 import com.example.chatapp.utility.FirebaseUtility;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class EmailLoginActivity extends AppCompatActivity {
-    EditText editTextEmail, editTextPassword;
-    Button btnLogin;
-    Button btnRegister;
-    TextView forgetPasswordTxt;
-    FirebaseAuth firebaseAuth;
+    private TextInputEditText editTextEmail;
+    private TextInputEditText editTextPassword;
+    private TextInputLayout textInputLayoutPassword;
+    private Button btnLogin;
+    private Button btnRegister;
+    private TextView forgetPasswordTxt;
+    private FirebaseAuth firebaseAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_email_login);
 
+        textInputLayoutPassword = findViewById(R.id.text_input_layout_password);
         editTextEmail = findViewById(R.id.edit_text_login_email);
         editTextPassword = findViewById(R.id.edit_text_login_password);
         btnLogin = findViewById(R.id.btn_login);
@@ -65,7 +70,7 @@ public class EmailLoginActivity extends AppCompatActivity {
         }
 
         if(password.isEmpty()) {
-            editTextEmail.setError("Can't leave blank");
+            editTextPassword.setError("Can't leave blank");
             return;
         }
 

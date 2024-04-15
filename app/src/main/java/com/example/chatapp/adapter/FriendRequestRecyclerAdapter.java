@@ -28,6 +28,7 @@ public class FriendRequestRecyclerAdapter extends
         FirestoreRecyclerAdapter<FriendRequest, FriendRequestRecyclerAdapter.FriendRequestViewHolder> {
 
     private Context context;
+
     public FriendRequestRecyclerAdapter(@NonNull FirestoreRecyclerOptions<FriendRequest> options, Context context) {
         super(options);
         this.context = context;
@@ -39,7 +40,7 @@ public class FriendRequestRecyclerAdapter extends
         setOtherUserAvatar(otherUserId, holder);
         FirebaseUtility.getUserById(otherUserId).get()
                 .addOnCompleteListener(task -> {
-                    if(task.isSuccessful()) {
+                    if (task.isSuccessful()) {
                         User otherUser = task.getResult().toObject(User.class);
                         holder.usernameText.setText(otherUser.getUsername());
                     }
@@ -58,10 +59,10 @@ public class FriendRequestRecyclerAdapter extends
 
         FirebaseUtility.getFriendRequestById(id).delete()
                 .addOnCompleteListener(task -> {
-                    if(task.isSuccessful()) {
+                    if (task.isSuccessful()) {
                         FirebaseUtility.getUserRelationshipById(id).set(userRelationship)
                                 .addOnCompleteListener(task1 -> {
-                                    if(task1.isSuccessful()) {
+                                    if (task1.isSuccessful()) {
                                         AndroidUtility.showToast(context, "Accept friend request");
                                     }
                                 });
@@ -73,7 +74,7 @@ public class FriendRequestRecyclerAdapter extends
         String id = model.getId();
         FirebaseUtility.getFriendRequestById(id).delete()
                 .addOnCompleteListener(task -> {
-                    if(task.isSuccessful()) {
+                    if (task.isSuccessful()) {
                         AndroidUtility.showToast(context, "Refuse friend request");
                     }
                 });

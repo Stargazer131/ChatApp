@@ -17,11 +17,12 @@ import android.widget.EditText;
 import com.example.chatapp.R;
 import com.example.chatapp.utility.AndroidUtility;
 import com.example.chatapp.utility.FirebaseUtility;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 public class ResetPasswordFragment extends DialogFragment {
-    private EditText emailInput;
+    private TextInputEditText emailInput;
     private Button sendBtn;
     private FirebaseAuth firebaseAuth;
 
