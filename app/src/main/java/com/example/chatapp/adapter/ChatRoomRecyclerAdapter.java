@@ -22,6 +22,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.chatapp.R;
 import com.example.chatapp.activity.ChatActivity;
 import com.example.chatapp.model.ChatMessage;
+import com.example.chatapp.model.ChatRoom;
 import com.example.chatapp.utility.AndroidUtility;
 import com.example.chatapp.utility.FirebaseUtility;
 import com.example.chatapp.utility.UrlString;
@@ -37,11 +38,15 @@ import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.util.ArrayList;
 
 @SuppressWarnings("deprecation")
-public class ChatRoomRecyclerAdapter extends FirestoreRecyclerAdapter<ChatMessage, RecyclerView.ViewHolder> {
+public class ChatRoomRecyclerAdapter extends
+        FirestoreRecyclerAdapter<ChatMessage, RecyclerView.ViewHolder> {
     private static final int TYPE_USER_MESSAGE = 0;
     private static final int TYPE_USER_IMAGE = 2;
     private static final int TYPE_USER_VIDEO = 4;
@@ -55,13 +60,15 @@ public class ChatRoomRecyclerAdapter extends FirestoreRecyclerAdapter<ChatMessag
     private Context context;
     private String currentUserId;
     private String otherUserId;
+    private String chatRoomId;
 
 
     public ChatRoomRecyclerAdapter(@NonNull FirestoreRecyclerOptions<ChatMessage> options, Context context, String otherUserId) {
         super(options);
         this.context = context;
         this.otherUserId = otherUserId;
-        currentUserId = FirebaseUtility.getCurrentUserId();
+        this.currentUserId = FirebaseUtility.getCurrentUserId();
+        this.chatRoomId = FirebaseUtility.getChatRoomId(this.currentUserId, this.otherUserId);
     }
 
     @NonNull
@@ -189,6 +196,22 @@ public class ChatRoomRecyclerAdapter extends FirestoreRecyclerAdapter<ChatMessag
             OtherUserVideoViewHolder otherUserImageViewHolder = (OtherUserVideoViewHolder) holder;
             releasePlayer(otherUserImageViewHolder.rightChatVideoView);
         }
+    }
+
+    @Override
+    public void onDataChanged() {
+        super.onDataChanged();
+        Log.d("CHAT_ROOM_ADAPTER", "DATA HAS CHANGED");
+        FirebaseUtility.getChatRoomById(chatRoomId).get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                ChatRoom chatRoom = task.getResult().toObject(ChatRoom.class);
+                String senderId = chatRoom.getLastMessageSenderId();
+                if (senderId != null && !senderId.equals(currentUserId)) {
+                    chatRoom.setLastMessageStatus(ChatRoom.STATUS_SEEN);
+                    FirebaseUtility.getChatRoomById(chatRoomId).set(chatRoom);
+                }
+            }
+        });
     }
 
     private void handleTextDownloadFile(TextView textView, ChatMessage model) {

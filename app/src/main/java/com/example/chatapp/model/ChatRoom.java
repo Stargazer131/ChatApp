@@ -5,20 +5,34 @@ import com.google.firebase.Timestamp;
 import java.util.List;
 
 public class ChatRoom {
-    String chatroomId;
-    List<String> userIds;
-    Timestamp lastMessageTimestamp;
-    String lastMessageSenderId;
-    String lastMessage;
+    private String chatroomId;
+    private List<String> userIds;
+    private Timestamp lastMessageTimestamp;
+    private String lastMessageSenderId;
+    private String lastMessageStatus;
+    private String lastMessage;
+    public static final String STATUS_SEEN = "seen";
+    public static final String STATUS_NOT_SEEN = "not_seen";
+
 
     public ChatRoom() {
     }
 
-    public ChatRoom(String chatroomId, List<String> userIds, Timestamp lastMessageTimestamp, String lastMessageSenderId) {
+    public ChatRoom(String chatroomId, List<String> userIds, Timestamp lastMessageTimestamp, String lastMessageSenderId, String lastMessageStatus, String lastMessage) {
         this.chatroomId = chatroomId;
         this.userIds = userIds;
         this.lastMessageTimestamp = lastMessageTimestamp;
         this.lastMessageSenderId = lastMessageSenderId;
+        this.lastMessageStatus = lastMessageStatus;
+        this.lastMessage = lastMessage;
+    }
+
+    public String getLastMessageStatus() {
+        return lastMessageStatus;
+    }
+
+    public void setLastMessageStatus(String lastMessageStatus) {
+        this.lastMessageStatus = lastMessageStatus;
     }
 
     public String getChatroomId() {

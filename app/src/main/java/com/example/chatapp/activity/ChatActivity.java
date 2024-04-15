@@ -129,7 +129,7 @@ public class ChatActivity extends AppCompatActivity {
                 new ActivityResultContracts.StartActivityForResult(), result -> {
                     if (result.getResultCode() == Activity.RESULT_OK) {
                         Uri uri = result.getData().getData();
-                        if(uri == null) {
+                        if (uri == null) {
                             return;
                         }
 
@@ -144,7 +144,7 @@ public class ChatActivity extends AppCompatActivity {
 
                         sendFileToUser(uri);
                     }
-        });
+                });
     }
 
     private String getFileNameFromUri(Uri uri) {
@@ -251,7 +251,7 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void changeStatusText(String status, Timestamp timestamp) {
-        if (status.equals("online")) {
+        if (status.equals(User.USER_ONLINE)) {
             otherUserStatusTxt.setText("Online");
             otherUserStatusTxt.setTextColor(Color.GREEN);
         } else {
@@ -286,7 +286,9 @@ public class ChatActivity extends AppCompatActivity {
                 .orderBy("timestamp", Query.Direction.ASCENDING);
 
         FirestoreRecyclerOptions<ChatMessage> options = new FirestoreRecyclerOptions.Builder<ChatMessage>()
-                .setQuery(query, ChatMessage.class).build();
+                .setQuery(query, ChatMessage.class)
+                .setLifecycleOwner(ChatActivity.this)
+                .build();
 
         adapter = new ChatRoomRecyclerAdapter(options, ChatActivity.this, otherUserId);
         LinearLayoutManager manager = new LinearLayoutManager(ChatActivity.this);
@@ -302,26 +304,11 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        if (adapter != null) {
-            adapter.startListening();
-        }
-    }
-
-    @Override
-    protected void onDestroy() {
-        if (adapter != null) {
-            adapter.stopListening();
-        }
-        super.onDestroy();
-    }
-
     private void sendMessageToUser(String message) {
         chatRoom.setLastMessageTimestamp(Timestamp.now());
         chatRoom.setLastMessageSenderId(FirebaseUtility.getCurrentUserId());
         chatRoom.setLastMessage(message);
+        chatRoom.setLastMessageStatus(ChatRoom.STATUS_NOT_SEEN);
         FirebaseUtility.getChatRoomById(chatroomId).set(chatRoom);
 
         ChatMessage chatMessage = new ChatMessage(
@@ -346,6 +333,7 @@ public class ChatActivity extends AppCompatActivity {
         chatRoom.setLastMessageTimestamp(timestampNow);
         chatRoom.setLastMessageSenderId(FirebaseUtility.getCurrentUserId());
         chatRoom.setLastMessage(message);
+        chatRoom.setLastMessageStatus(ChatRoom.STATUS_NOT_SEEN);
         FirebaseUtility.getChatRoomById(chatroomId).set(chatRoom);
 
         // set message type
@@ -370,6 +358,7 @@ public class ChatActivity extends AppCompatActivity {
         chatRoom.setLastMessageTimestamp(timestampNow);
         chatRoom.setLastMessageSenderId(FirebaseUtility.getCurrentUserId());
         chatRoom.setLastMessage(message);
+        chatRoom.setLastMessageStatus(ChatRoom.STATUS_NOT_SEEN);
         FirebaseUtility.getChatRoomById(chatroomId).set(chatRoom);
 
         // set message type
@@ -492,4 +481,29 @@ public class ChatActivity extends AppCompatActivity {
         return fileSize;
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (adapter != null) {
+            adapter.startListening();
+            Log.d("CHAT_ACTIVITY", "START LISTENING");
+        }
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (adapter != null) {
+            adapter.stopListening();
+            Log.d("CHAT_ACTIVITY", "STOP LISTENING");
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
+    }
 }

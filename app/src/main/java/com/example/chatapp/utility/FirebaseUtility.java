@@ -70,7 +70,7 @@ public class FirebaseUtility {
             if(task.isSuccessful()) {
                 User user = task.getResult().toObject(User.class);
                 user.setLastActive(Timestamp.now());
-                user.setStatus("offline");
+                user.setStatus(User.USER_OFFLINE);
                 getUserById(userId).set(user).addOnCompleteListener(task1 -> {
                     if(task1.isSuccessful()) {
                         Log.d("UPDATE USER STATUS", "SUCCESS");

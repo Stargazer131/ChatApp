@@ -6,6 +6,8 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 
+import com.example.chatapp.model.User;
+
 public class AppLifecycleListener implements DefaultLifecycleObserver {
     private final String TAG = "AppLifecycleListener";
 
@@ -14,7 +16,7 @@ public class AppLifecycleListener implements DefaultLifecycleObserver {
         Log.i(TAG, "Moved to foreground");
         if(FirebaseUtility.isLoggedIn()) {
             // online
-            FirebaseUtility.updateCurrentUserStatus("online");
+            FirebaseUtility.updateCurrentUserStatus(User.USER_ONLINE);
         }
     }
 

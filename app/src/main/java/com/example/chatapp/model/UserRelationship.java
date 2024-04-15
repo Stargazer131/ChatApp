@@ -6,6 +6,8 @@ public class UserRelationship {
     private String id;
     private List<String> userIds;
     private String type;
+    public static final String FRIEND = "friend";
+    public static final String BLOCKED = "blocked";
 
     public UserRelationship() {
     }

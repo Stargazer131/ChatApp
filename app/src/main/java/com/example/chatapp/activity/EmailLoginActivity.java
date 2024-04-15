@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.chatapp.R;
 import com.example.chatapp.fragment.ResetPasswordFragment;
+import com.example.chatapp.model.User;
 import com.example.chatapp.utility.AndroidUtility;
 import com.example.chatapp.utility.FirebaseUtility;
 import com.google.firebase.auth.FirebaseAuth;
@@ -75,7 +76,7 @@ public class EmailLoginActivity extends AppCompatActivity {
                 .addOnCompleteListener(EmailLoginActivity.this, task -> {
                     if (task.isSuccessful()) {
                         String userId = task.getResult().getUser().getUid();
-                        FirebaseUtility.updateCurrentUserStatus(userId, "online");
+                        FirebaseUtility.updateCurrentUserStatus(userId, User.USER_ONLINE);
 
                         Intent intent = new Intent(EmailLoginActivity.this, MainActivity.class);
                         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);

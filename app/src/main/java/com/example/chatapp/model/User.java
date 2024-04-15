@@ -10,6 +10,8 @@ public class User {
     private String status;
     private String fcmToken;
     private Timestamp lastActive;
+    public static final String USER_ONLINE = "online";
+    public static final String USER_OFFLINE = "offline";
 
     public User() {
     }

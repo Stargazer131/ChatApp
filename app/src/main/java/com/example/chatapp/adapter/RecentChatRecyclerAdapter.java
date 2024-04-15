@@ -2,6 +2,7 @@ package com.example.chatapp.adapter;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -34,8 +35,9 @@ public class RecentChatRecyclerAdapter
 
     @Override
     protected void onBindViewHolder(@NonNull RecentChatViewHolder holder, int position, @NonNull ChatRoom model) {
-        if (model.getLastMessageSenderId().equals("")) {
+        if (model.getLastMessageSenderId() == null) {
             holder.parent.setLayoutParams(new RecyclerView.LayoutParams(0, 0));
+            return;
         }
 
         FirebaseUtility.getOtherUserFromChatroom(model.getUserIds())
@@ -52,6 +54,9 @@ public class RecentChatRecyclerAdapter
                             holder.lastMessageText.setText(
                                     String.format("%s : %s", otherUser.getUsername(), model.getLastMessage())
                             );
+                            if(model.getLastMessageStatus().equals(ChatRoom.STATUS_NOT_SEEN)) {
+                                holder.lastMessageText.setTypeface(null, Typeface.BOLD);
+                            }
                         }
 
                         holder.usernameText.setText(otherUser.getUsername());

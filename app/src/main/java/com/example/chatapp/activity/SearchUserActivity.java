@@ -1,6 +1,7 @@
 package com.example.chatapp.activity;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageButton;
@@ -86,14 +87,24 @@ public class SearchUserActivity extends AppCompatActivity {
         super.onStart();
         if (adapter != null) {
             adapter.startListening();
+            Log.d("FRIEND_FRAGMENT", "START LISTENING");
         }
     }
 
     @Override
-    protected void onDestroy() {
+    public void onStop() {
+        super.onStop();
         if (adapter != null) {
             adapter.stopListening();
+            Log.d("FIND_USER_ACTIVITY", "STOP LISTENING");
         }
-        super.onDestroy();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
     }
 }

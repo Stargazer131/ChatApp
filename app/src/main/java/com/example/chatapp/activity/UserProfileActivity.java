@@ -143,7 +143,7 @@ public class UserProfileActivity extends AppCompatActivity {
     }
 
     private void getChatRoomData() {
-        if(userRelationship == null || !userRelationship.getType().equals("friend")) {
+        if(userRelationship == null || !userRelationship.getType().equals(UserRelationship.FRIEND)) {
             AndroidUtility.showToast(UserProfileActivity.this, "You must be friend before chatting");
             return;
         }
@@ -159,7 +159,9 @@ public class UserProfileActivity extends AppCompatActivity {
                             chatroomId,
                             Arrays.asList(FirebaseUtility.getCurrentUserId(), userId),
                             Timestamp.now(),
-                            ""
+                            null,
+                            null,
+                            null
                     );
                     ChatRoom finalChatRoom = chatRoom;
                     FirebaseUtility.getChatRoomById(chatroomId).set(chatRoom).addOnCompleteListener(task1 -> {

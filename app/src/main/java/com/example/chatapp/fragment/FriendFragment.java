@@ -6,6 +6,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -43,7 +44,7 @@ public class FriendFragment extends Fragment {
     private void setupRecyclerView() {
         Query query = FirebaseUtility.getAllUserRelationship()
                 .whereArrayContains("userIds", FirebaseUtility.getCurrentUserId())
-                .whereEqualTo("type", "friend");
+                .whereEqualTo("type", UserRelationship.FRIEND);
 
         FirestoreRecyclerOptions<UserRelationship> options = new FirestoreRecyclerOptions.Builder<UserRelationship>()
                 .setQuery(query, UserRelationship.class).build();
@@ -56,18 +57,26 @@ public class FriendFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-
         if (adapter != null) {
             adapter.startListening();
+            Log.d("FRIEND_FRAGMENT", "START LISTENING");
         }
     }
 
     @Override
-    public void onDestroy() {
+    public void onStop() {
+        super.onStop();
         if (adapter != null) {
             adapter.stopListening();
+            Log.d("FRIEND_FRAGMENT", "STOP LISTENING");
         }
+    }
 
-        super.onDestroy();
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
     }
 }
