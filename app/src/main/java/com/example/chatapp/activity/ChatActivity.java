@@ -20,7 +20,6 @@ import android.widget.TextView;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -39,17 +38,7 @@ import com.google.firebase.firestore.Query;
 
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.util.Locale;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
 
 public class ChatActivity extends AppCompatActivity {
     private User otherUser;
@@ -111,6 +100,7 @@ public class ChatActivity extends AppCompatActivity {
             if (message.isEmpty()) {
                 return;
             }
+
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.hideSoftInputFromWindow(messageInput.getWindowToken(), 0);
             sendMessageToUser(message);
@@ -292,6 +282,7 @@ public class ChatActivity extends AppCompatActivity {
         adapter = new ChatRoomRecyclerAdapter(options, ChatActivity.this, otherUserId);
         LinearLayoutManager manager = new LinearLayoutManager(ChatActivity.this);
         recyclerView.setLayoutManager(manager);
+        ((LinearLayoutManager)recyclerView.getLayoutManager()).setStackFromEnd(true);
         recyclerView.setAdapter(adapter);
         adapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
             @Override
@@ -318,8 +309,7 @@ public class ChatActivity extends AppCompatActivity {
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         messageInput.setText("");
-                        boolean isNotificationSuccessful = sendNotification(message);
-                        Log.d("SEND_Notification", String.valueOf(isNotificationSuccessful));
+                        sendNotification(message);
                     }
                 });
     }
@@ -381,8 +371,7 @@ public class ChatActivity extends AppCompatActivity {
                         FirebaseUtility.getAllChatMessageOfChatRoomById(chatroomId).add(chatMessage)
                                 .addOnCompleteListener(task1 -> {
                                     if (task1.isSuccessful()) {
-                                        boolean isNotificationSuccessful = sendNotification(chatMessage.getMessage());
-                                        Log.d("SEND_Notification", String.valueOf(isNotificationSuccessful));
+                                        sendNotification(chatMessage.getMessage());
 
                                     } else {
                                         AndroidUtility.showToast(ChatActivity.this, "Can't add message");
@@ -403,8 +392,7 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
-    private boolean sendNotification(String message) {
-        AtomicBoolean successful = new AtomicBoolean(false);
+    private void sendNotification(String message) {
         FirebaseUtility.getCurrentUser().get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 User currentUser = task.getResult().toObject(User.class);
@@ -417,51 +405,19 @@ public class ChatActivity extends AppCompatActivity {
                     // data
                     JSONObject dataObj = new JSONObject();
                     dataObj.put("userId", currentUser.getUserId());
+                    dataObj.put("notificationType", FirebaseUtility.NOTIFICATION_TYPE_CHAT);
 
                     JSONObject jsonObject = new JSONObject();
                     jsonObject.put("data", dataObj);
                     jsonObject.put("notification", notificationObj);
                     jsonObject.put("to", otherUser.getFcmToken());
 
-                    successful.set(callApi(jsonObject));
+                    FirebaseUtility.callFCMApi(jsonObject);
 
                 } catch (Exception ignored) {
-                    successful.set(false);
                 }
             }
         });
-
-        return successful.get();
-    }
-
-    private boolean callApi(JSONObject jsonObject) {
-        final boolean[] successful = {false};
-
-        MediaType mediaType = MediaType.get("application/json; charset=utf-8");
-        OkHttpClient client = new OkHttpClient();
-        String url = "https://fcm.googleapis.com/fcm/send";
-        RequestBody body = RequestBody.create(jsonObject.toString(), mediaType);
-        String apiKey = "AAAAJiCJMaM:APA91bGanpXPGafcmHJRTAfaWBcMlGqx" +
-                "PTSdp9OvYiI80bUz_O_dI_VDXgWU2gePx-czLUafmf_JgxQKg9gBUqjs3uhxb8PW9l" +
-                "TlKRC4zgibtZWdt-DTcsv8bYqhCQrRC5egFG96OaRq";
-        Request request = new Request.Builder()
-                .url(url)
-                .post(body)
-                .header("Authorization", "Bearer" + " " + apiKey)
-                .build();
-
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                successful[0] = false;
-            }
-
-            @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) {
-                successful[0] = true;
-            }
-        });
-        return successful[0];
     }
 
     private static long getMediaFileSize(Context context, Uri mediaUri) {

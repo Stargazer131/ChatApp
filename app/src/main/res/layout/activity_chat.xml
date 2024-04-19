@@ -44,7 +44,7 @@
             android:layout_marginStart="10dp"
             android:layout_toEndOf="@id/profile_pic_layout"
             android:layout_below="@id/other_username"
-            android:text="Online"
+            android:text="Status"
             android:textStyle="bold"
             android:id="@+id/other_user_status_txt"
             android:layout_width="wrap_content"

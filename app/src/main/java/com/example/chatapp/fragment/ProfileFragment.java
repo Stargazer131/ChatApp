@@ -30,7 +30,7 @@ public class ProfileFragment extends Fragment {
     private EditText usernameInput, emailInput;
     private Button updateProfileBtn;
     private Button logoutBtn;
-    private Button changePasswordBtn;
+    private ImageView changePasswordBtn;
 
     private User currentUser;
     private ActivityResultLauncher<Intent> imagePickLauncher;

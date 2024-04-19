@@ -18,6 +18,8 @@ import com.example.chatapp.utility.AndroidUtility;
 import com.example.chatapp.utility.FirebaseUtility;
 import com.google.firebase.Timestamp;
 
+import org.json.JSONObject;
+
 import java.util.Arrays;
 
 public class UserProfileActivity extends AppCompatActivity {
@@ -53,8 +55,6 @@ public class UserProfileActivity extends AppCompatActivity {
             getChatRoomData();
         });
         btnFriend.setOnClickListener(v -> checkUserRel());
-
-
     }
 
     private void checkUserRel() {
@@ -101,16 +101,47 @@ public class UserProfileActivity extends AppCompatActivity {
                                             AndroidUtility.showToast(
                                                     UserProfileActivity.this, "Friend request sent successfully"
                                             );
+                                            sendNotification();
+
                                         } else {
                                             AndroidUtility.showToast(
                                                     UserProfileActivity.this, "Friend request sent failed"
                                             );
+
                                         }
                                         btnFriend.setEnabled(true);
                                     });
                         }
                     }
                 });
+    }
+
+    private void sendNotification() {
+        FirebaseUtility.getCurrentUser().get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                User currentUser = task.getResult().toObject(User.class);
+                try {
+                    // notification
+                    JSONObject notificationObj = new JSONObject();
+                    notificationObj.put("title", "New friend request");
+                    notificationObj.put("body", currentUser.getUsername() + " " + "has sent you a friend request");
+
+                    // data
+                    JSONObject dataObj = new JSONObject();
+                    dataObj.put("userId", currentUser.getUserId());
+                    dataObj.put("notificationType", FirebaseUtility.NOTIFICATION_TYPE_REQUEST);
+
+                    JSONObject jsonObject = new JSONObject();
+                    jsonObject.put("data", dataObj);
+                    jsonObject.put("notification", notificationObj);
+                    jsonObject.put("to", user.getFcmToken());
+
+                    FirebaseUtility.callFCMApi(jsonObject);
+
+                } catch (Exception ignored) {
+                }
+            }
+        });
     }
 
     private void setUserRelationshipData() {

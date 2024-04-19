@@ -20,8 +20,13 @@ public class SplashActivity extends AppCompatActivity {
         setContentView(R.layout.activity_splash);
         ProcessLifecycleOwner.get().getLifecycle().addObserver(new AppLifecycleListener());
 
-        Bundle extras = getIntent().getExtras();
-        String userId = (extras != null) ? extras.getString("userId") : null;
+        String userId = null;
+        try {
+            userId = getIntent().getStringExtra("userId");
+        } catch (Exception ignored) {
+
+        }
+
         if (userId != null) {
             startAppFromNotification(userId);
         } else {
@@ -41,23 +46,21 @@ public class SplashActivity extends AppCompatActivity {
     }
 
     private void startAppFromNotification(String userId) {
-        FirebaseUtility.getUserById(userId).get()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        User model = task.getResult().toObject(User.class);
-
-                        Intent mainIntent = new Intent(SplashActivity.this, MainActivity.class);
-                        mainIntent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-                        startActivity(mainIntent);
-
-                        String chatRoomId = FirebaseUtility.getChatRoomId(userId, FirebaseUtility.getCurrentUserId());
-                        Intent intent = new Intent(SplashActivity.this, ChatActivity.class);
-                        intent.putExtra("otherUserId", userId);
-                        intent.putExtra("chatRoomId", chatRoomId);
-                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(intent);
-                        finish();
-                    }
-                });
+        String notificationType = getIntent().getStringExtra("notificationType");
+        if(notificationType.equals(FirebaseUtility.NOTIFICATION_TYPE_CHAT)) {
+            String chatRoomId = FirebaseUtility.getChatRoomId(userId, FirebaseUtility.getCurrentUserId());
+            Intent intent = new Intent(SplashActivity.this, ChatActivity.class);
+            intent.putExtra("otherUserId", userId);
+            intent.putExtra("chatRoomId", chatRoomId);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        } else {
+            Intent mainIntent = new Intent(SplashActivity.this, MainActivity.class);
+            mainIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            mainIntent.putExtra("fragmentType", MainActivity.FRIEND_REQUEST_FRAGMENT);
+            startActivity(mainIntent);
+            finish();
+        }
     }
 }

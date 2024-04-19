@@ -3,6 +3,8 @@ package com.example.chatapp.utility;
 
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import com.example.chatapp.model.User;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
@@ -13,10 +15,21 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class FirebaseUtility {
     private static final String USER_TABLE = "users";
@@ -27,7 +40,8 @@ public class FirebaseUtility {
 
     private static final String USER_PROFILE_STORAGE = "profile_pic";
     private static final String USER_MEDIA_FILE_STORAGE = "media_file";
-
+    public static final String NOTIFICATION_TYPE_CHAT = "chat_message";
+    public static final String NOTIFICATION_TYPE_REQUEST = "friend_request";
 
     public static String getCurrentUserId() {
         return FirebaseAuth.getInstance().getUid();
@@ -189,5 +203,30 @@ public class FirebaseUtility {
         Date date = timestamp.toDate();
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy-HH-mm-ss-SSS", Locale.getDefault());
         return dateFormat.format(date);
+    }
+
+    public static void callFCMApi(JSONObject jsonObject) {
+        MediaType mediaType = MediaType.get("application/json; charset=utf-8");
+        OkHttpClient client = new OkHttpClient();
+        String url = "https://fcm.googleapis.com/fcm/send";
+        RequestBody body = RequestBody.create(jsonObject.toString(), mediaType);
+        String apiKey = "AAAAJiCJMaM:APA91bGanpXPGafcmHJRTAfaWBcMlGqx" +
+                "PTSdp9OvYiI80bUz_O_dI_VDXgWU2gePx-czLUafmf_JgxQKg9gBUqjs3uhxb8PW9l" +
+                "TlKRC4zgibtZWdt-DTcsv8bYqhCQrRC5egFG96OaRq";
+        Request request = new Request.Builder()
+                .url(url)
+                .post(body)
+                .header("Authorization", "Bearer" + " " + apiKey)
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) {
+            }
+        });
     }
 }

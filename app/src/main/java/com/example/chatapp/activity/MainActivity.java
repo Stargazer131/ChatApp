@@ -32,6 +32,11 @@ public class MainActivity extends AppCompatActivity {
     private FriendRequestFragment friendRequestFragment;
     private ImageButton searchButton;
     private ActivityResultLauncher<String> requestPermissionLauncher;
+    public static final int RECENT_CHAT_FRAGMENT = 0;
+    public static final int PROFILE_FRAGMENT = 3;
+    public static final int FRIEND_FRAGMENT = 1;
+    public static final int FRIEND_REQUEST_FRAGMENT = 2;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,7 +75,21 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
 
-        bottomNavigationView.setSelectedItemId(R.id.menu_chat);
+        int fragmentType = getIntent().getIntExtra("fragmentType", 0);
+        switch (fragmentType) {
+            case FRIEND_FRAGMENT:
+                bottomNavigationView.setSelectedItemId(R.id.menu_friend);
+                break;
+            case FRIEND_REQUEST_FRAGMENT:
+                bottomNavigationView.setSelectedItemId(R.id.menu_friend_request);
+                break;
+            case PROFILE_FRAGMENT:
+                bottomNavigationView.setSelectedItemId(R.id.menu_profile);
+                break;
+            default:
+                bottomNavigationView.setSelectedItemId(R.id.menu_chat);
+        }
+
         updateFCMToken();
 
         requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
