@@ -3,10 +3,12 @@ package com.example.chatapp.activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.chatapp.R;
@@ -16,15 +18,20 @@ import com.example.chatapp.model.User;
 import com.example.chatapp.model.UserRelationship;
 import com.example.chatapp.utility.AndroidUtility;
 import com.example.chatapp.utility.FirebaseUtility;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.DocumentSnapshot;
 
 import org.json.JSONObject;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class UserProfileActivity extends AppCompatActivity {
     private User user;
     private String userId;
+    private String userRelationshipId;
     private ImageView userProfilePicture;
     private TextView txtUsername, txtEmail, txtFriend, txtUsernameUserProfile;
     private ImageButton btnBackHome;
@@ -46,9 +53,11 @@ public class UserProfileActivity extends AppCompatActivity {
         btnBackHome = findViewById(R.id.btn_user_profile_back_home);
         txtUsernameUserProfile = findViewById(R.id.text_username_user_profile);
         userId = getIntent().getStringExtra("userId");
+        userRelationshipId = FirebaseUtility.getUserRelationshipId(userId, FirebaseUtility.getCurrentUserId());
 
         setUserData();
         setUserRelationshipData();
+        setUpUserRelationshipListener();
 
         btnBackHome.setOnClickListener(v -> startActivity(AndroidUtility.getBackHomeIntent(UserProfileActivity.this)));
         btnChat.setOnClickListener(v -> {
@@ -57,13 +66,42 @@ public class UserProfileActivity extends AppCompatActivity {
         btnFriend.setOnClickListener(v -> checkUserRel());
     }
 
+    private void setUpUserRelationshipListener() {
+        FirebaseUtility.getUserRelationshipById(userRelationshipId)
+                .addSnapshotListener((value, error) -> {
+                    String tag = "USER_RELATIONSHIP_DOCUMENT_LISTENER";
+                    if (error != null) {
+                        Log.w(tag, "Listen failed.", error);
+                        return;
+                    }
+
+                    if (value != null && value.exists()) {
+                        Log.d(tag, "Current data: has changed");
+                        String relationshipType = value.getString("type");
+                        String id = value.getString("id");
+
+                        if(id != null) {
+                            List<String> userIds = Arrays.asList(userId, FirebaseUtility.getCurrentUserId());
+                            userRelationship = new UserRelationship(id, userIds, relationshipType);
+                            return;
+                        }
+
+                        if (relationshipType != null) {
+                            userRelationship.setType(relationshipType);
+                        }
+                    } else {
+                        Log.d(tag, "Current data: null");
+                    }
+                });
+    }
+
     private void checkUserRel() {
         String userRelationshipId = FirebaseUtility.getUserRelationshipId(FirebaseUtility.getCurrentUserId(), userId);
         FirebaseUtility.getUserRelationshipById(userRelationshipId).get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         UserRelationship userRelationshipData = task.getResult().toObject(UserRelationship.class);
-                        if(userRelationshipData == null) {
+                        if (userRelationshipData == null) {
                             sendFriendRequest();
                         }
                     }
@@ -82,8 +120,8 @@ public class UserProfileActivity extends AppCompatActivity {
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         FriendRequest friendRequestData = task.getResult().toObject(FriendRequest.class);
-                        if(friendRequestData != null) {
-                            if(friendRequestData.getFromUserId().equals(FirebaseUtility.getCurrentUserId())) {
+                        if (friendRequestData != null) {
+                            if (friendRequestData.getFromUserId().equals(FirebaseUtility.getCurrentUserId())) {
                                 AndroidUtility.showToast(
                                         UserProfileActivity.this, "You have already sent the request"
                                 );
@@ -97,7 +135,7 @@ public class UserProfileActivity extends AppCompatActivity {
                         } else {
                             FirebaseUtility.getFriendRequestById(friendRequestId).set(friendRequest)
                                     .addOnCompleteListener(task1 -> {
-                                        if(task1.isSuccessful()) {
+                                        if (task1.isSuccessful()) {
                                             AndroidUtility.showToast(
                                                     UserProfileActivity.this, "Friend request sent successfully"
                                             );
@@ -174,7 +212,7 @@ public class UserProfileActivity extends AppCompatActivity {
     }
 
     private void getChatRoomData() {
-        if(userRelationship == null || !userRelationship.getType().equals(UserRelationship.FRIEND)) {
+        if (userRelationship == null || !userRelationship.getType().equals(UserRelationship.FRIEND)) {
             AndroidUtility.showToast(UserProfileActivity.this, "You must be friend before chatting");
             return;
         }
@@ -195,8 +233,8 @@ public class UserProfileActivity extends AppCompatActivity {
                             null
                     );
                     ChatRoom finalChatRoom = chatRoom;
-                    FirebaseUtility.getChatRoomById(chatroomId).set(chatRoom).addOnCompleteListener(task1 -> {
-                        if (task1.isSuccessful()) {
+                    FirebaseUtility.getChatRoomById(chatroomId).set(chatRoom).addOnCompleteListener(task2 -> {
+                        if (task2.isSuccessful()) {
                             openChatActivity(finalChatRoom.getChatroomId());
                         } else {
                             AndroidUtility.showToast(UserProfileActivity.this, "Can't make new chat room");
