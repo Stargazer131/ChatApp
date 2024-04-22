@@ -54,7 +54,7 @@ public class ChatActivity extends AppCompatActivity {
     private TextView otherUserStatusTxt;
     private RecyclerView recyclerView;
     private ImageView otherUserProfileImageView;
-    private PopupMenu popupMenu;
+    private PopupMenu mediaFilePopupMenu;
     // for sending image
     private ActivityResultLauncher<PickVisualMediaRequest> imagePickerLauncher;
     private ActivityResultLauncher<PickVisualMediaRequest> videoPickerLauncher;
@@ -105,7 +105,7 @@ public class ChatActivity extends AppCompatActivity {
             imm.hideSoftInputFromWindow(messageInput.getWindowToken(), 0);
             sendMessageToUser(message);
         });
-        btnAddOtherFile.setOnClickListener(v -> setUpPopupMenu());
+        btnAddOtherFile.setOnClickListener(v -> setUpMediaFilePopupMenu());
         otherUserProfileImageView.setOnClickListener(v -> {
             Intent intent = new Intent(ChatActivity.this, UserProfileActivity.class);
             intent.putExtra("userId", otherUser.getUserId());
@@ -187,12 +187,12 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
-    private void setUpPopupMenu() {
-        popupMenu = new PopupMenu(ChatActivity.this, btnAddOtherFile);
-        popupMenu.getMenuInflater().inflate(R.menu.pop_up_other_file_menu, popupMenu.getMenu());
-        popupMenu.setForceShowIcon(true);
+    private void setUpMediaFilePopupMenu() {
+        mediaFilePopupMenu = new PopupMenu(ChatActivity.this, btnAddOtherFile);
+        mediaFilePopupMenu.getMenuInflater().inflate(R.menu.pop_up_media_file_menu, mediaFilePopupMenu.getMenu());
+        mediaFilePopupMenu.setForceShowIcon(true);
 
-        popupMenu.setOnMenuItemClickListener(item -> {
+        mediaFilePopupMenu.setOnMenuItemClickListener(item -> {
             if (item.getItemId() == R.id.menu_item_image) {
                 imagePickerLauncher.launch(new PickVisualMediaRequest.Builder()
                         .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
@@ -213,7 +213,7 @@ public class ChatActivity extends AppCompatActivity {
             return true;
         });
 
-        popupMenu.show();
+        mediaFilePopupMenu.show();
     }
 
     private void setUpUserStatusListener() {

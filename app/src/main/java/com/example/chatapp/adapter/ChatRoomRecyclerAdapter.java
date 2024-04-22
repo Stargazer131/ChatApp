@@ -17,6 +17,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.PopupMenu;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.chatapp.R;
@@ -38,9 +39,6 @@ import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.util.ArrayList;
 
@@ -156,21 +154,37 @@ public class ChatRoomRecyclerAdapter extends
             UserImageViewHolder userImageHolder = (UserImageViewHolder) holder;
             setProfileImage(currentUserId, userImageHolder.leftChatImageProfile);
             setImage(model, userImageHolder.leftChatImageView);
+            userImageHolder.leftChatImageView.setOnLongClickListener(v -> {
+                setUpChatMessageItemPopupMenu(userImageHolder.leftChatImageView, model);
+                return true;
+            });
 
         } else if (viewType == TYPE_OTHER_USER_IMAGE) {
             OtherUserImageViewHolder otherUserImageHolder = (OtherUserImageViewHolder) holder;
             setProfileImage(otherUserId, otherUserImageHolder.rightChatImageProfile);
             setImage(model, otherUserImageHolder.rightChatImageView);
+            otherUserImageHolder.rightChatImageView.setOnLongClickListener(v -> {
+                setUpChatMessageItemPopupMenu(otherUserImageHolder.rightChatImageView, model);
+                return true;
+            });
 
         } else if (viewType == TYPE_USER_VIDEO) {
             UserVideoViewHolder userVideoHolder = (UserVideoViewHolder) holder;
             setProfileImage(currentUserId, userVideoHolder.leftChatImageProfile);
             setVideoResource(model, userVideoHolder.leftChatVideoView);
+            userVideoHolder.leftChatVideoView.setOnLongClickListener(v -> {
+                setUpChatMessageItemPopupMenu(userVideoHolder.leftChatVideoView, model);
+                return true;
+            });
 
         } else if (viewType == TYPE_OTHER_USER_VIDEO) {
             OtherUserVideoViewHolder otherUserVideoHolder = (OtherUserVideoViewHolder) holder;
             setProfileImage(otherUserId, otherUserVideoHolder.rightChatImageProfile);
             setVideoResource(model, otherUserVideoHolder.rightChatVideoView);
+            otherUserVideoHolder.rightChatVideoView.setOnLongClickListener(v -> {
+                setUpChatMessageItemPopupMenu(otherUserVideoHolder.rightChatVideoView, model);
+                return true;
+            });
 
         } else if (viewType == TYPE_USER_FILE) {
             UserMessageViewHolder userMessageHolder = (UserMessageViewHolder) holder;
@@ -212,6 +226,21 @@ public class ChatRoomRecyclerAdapter extends
                 }
             }
         });
+    }
+
+    private void setUpChatMessageItemPopupMenu(View view, ChatMessage model) {
+        PopupMenu popupMenu = new PopupMenu(context, view);
+        popupMenu.getMenuInflater().inflate(R.menu.pop_up_chat_message_item_menu, popupMenu.getMenu());
+        popupMenu.setForceShowIcon(true);
+
+        popupMenu.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == R.id.menu_item_download) {
+                downloadFile(model);
+            }
+            return true;
+        });
+
+        popupMenu.show();
     }
 
     private void handleTextDownloadFile(TextView textView, ChatMessage model) {
